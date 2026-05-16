@@ -123,8 +123,8 @@ body.recording .rec b{box-shadow:0 0 12px var(--rec);animation:pulse 1.15s ease-
 .player .empty svg{width:34px;height:34px;margin:0 auto;opacity:.5}
 body.has-video .player .empty{opacity:0}
 
-.pbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:14px;
-  padding:16px 18px 18px;opacity:0;transform:translateY(8px);
+.pbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:28px;
+  padding:16px 36px 18px 36px;opacity:0;transform:translateY(8px);
   transition:opacity .35s var(--ease),transform .35s var(--ease);
   background:linear-gradient(0deg,rgba(0,0,0,.55),transparent)}
 .player:hover .pbar,.player.show .pbar{opacity:1;transform:none}
@@ -138,27 +138,68 @@ body:not(.has-video) .pbar{display:none}
 .pbtn:hover{transform:scale(1.08)}
 .pbtn:active{transform:scale(1.16)}
 
-.time{font-family:"JetBrains Mono",monospace;font-size:12px;color:rgba(255,255,255,.85);
-  flex:none;min-width:88px;text-align:center;letter-spacing:.02em;
-  text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.time{display:none}
 
-/* seekbar: glass track + refracting glass thumb (the demo's slider) */
-.seek{position:relative;flex:1;height:34px;display:flex;align-items:center;cursor:pointer;
-  touch-action:none}
-.seek-track{position:relative;width:100%;height:14px;border-radius:999px}
-.seek-track .lg-tint{box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),
-  inset 0 1px 2px rgba(0,0,0,.4)}
-.seek-fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;z-index:2;
-  background:linear-gradient(90deg,rgba(120,235,210,.5),rgba(95,182,255,.75));
-  box-shadow:0 0 14px -2px rgba(95,182,255,.6)}
-.seek-buf{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;z-index:1;
-  background:rgba(255,255,255,.14)}
-.seek-thumb{position:absolute;top:50%;left:0;width:30px;height:30px;
-  transform:translate(-50%,-50%);border-radius:50%;z-index:3;
-  transition:width .25s var(--spring),height .25s var(--spring)}
-.seek-thumb .lg-tint{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),
-  inset 0 1px 2px rgba(255,255,255,.5),0 6px 16px -6px rgba(0,0,0,.7)}
-.seek.drag .seek-thumb{width:40px;height:40px}
+/* seekbar: GIF-style glass scrubber */
+.seek{
+  --seek-track-y:38px;
+  --seek-track-h:5px;
+  position:relative;flex:1;height:62px;display:flex;align-items:flex-start;
+  cursor:pointer;touch-action:none;overflow:visible;min-width:130px;
+  margin-left:4px;margin-right:4px;
+}
+.seek::before{content:"";position:absolute;left:-10px;right:-10px;top:14px;bottom:0}
+.seek-readout{
+  position:absolute;left:50%;top:0;transform:translateX(-50%) translateY(3px) scale(.96);z-index:6;
+  font:700 15px/1 "Manrope",system-ui,sans-serif;letter-spacing:-.02em;
+  color:rgba(255,255,255,.92);text-shadow:0 1px 8px rgba(0,0,0,.45);
+  opacity:0;user-select:none;pointer-events:none;
+  transition:filter .18s var(--ease),opacity .18s var(--ease),transform .18s var(--spring);
+}
+.seek.thumb-pressed .seek-readout{
+  opacity:1;filter:blur(.18px);transform:translateX(-50%) translateY(-1px) scale(1.04);
+}
+.seek-track,.seek-buf,.seek-fill{
+  position:absolute;left:0;right:auto;top:var(--seek-track-y);height:var(--seek-track-h);
+  border-radius:999px;transform:translateY(-50%);
+}
+.seek-track{width:100%;background:rgba(255,255,255,.22);z-index:1}
+.seek-track .lg-tint{
+  background:rgba(255,255,255,.14)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),
+    inset 0 1px 1px rgba(255,255,255,.22),0 1px 5px rgba(0,0,0,.25);
+}
+.seek-buf{width:0%;z-index:2;background:rgba(255,255,255,.18)}
+.seek-fill{
+  width:0%;z-index:3;background:#0a84ff;
+  box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 16px -4px rgba(10,132,255,.9);
+}
+.seek-thumb{
+  position:absolute;top:var(--seek-track-y);left:0;width:58px;height:30px;
+  transform:translate(-50%,-50%);border-radius:999px;z-index:5;
+  transition:width .22s var(--spring),height .22s var(--spring),filter .22s var(--ease);
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.30));
+}
+.seek-thumb .lg-bg{opacity:0!important}
+.seek-thumb .lg-tint{
+  background:#fff!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.86),
+    inset 0 1px 2px rgba(255,255,255,.9),
+    inset 0 -5px 10px rgba(0,0,0,.08),0 8px 18px -9px rgba(0,0,0,.65);
+}
+.seek-thumb .lg-spec{opacity:0!important}
+.seek:hover .seek-thumb{width:58px;height:30px;filter:drop-shadow(0 9px 15px rgba(0,0,0,.34))}
+.seek.thumb-pressed .seek-thumb{width:64px;height:32px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.36))}
+.seek.thumb-pressed .seek-thumb .lg-bg{opacity:1!important}
+.seek.thumb-pressed .seek-thumb .lg-tint{
+  background:rgba(255,255,255,.20)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.46),
+    inset 0 1px 2px rgba(255,255,255,.55),
+    inset 0 -6px 12px rgba(0,0,0,.10),0 8px 18px -9px rgba(0,0,0,.65);
+}
+.seek.thumb-pressed .seek-thumb .lg-spec{opacity:1!important}
+.seek:focus-visible{outline:none}
+.seek:focus-visible .seek-track{box-shadow:0 0 0 3px rgba(10,132,255,.28)}
 
 .panel{position:relative;border-radius:var(--r-lg);background:rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.09);
@@ -249,16 +290,15 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
         <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       </button>
 
-      <div class="seek" id="seek">
+      <div class="seek" id="seek" role="slider" tabindex="0" aria-label="Video scrubber" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+       <div class="seek-readout" id="seekReadout">0:00 / 0:00</div>
        <div class="seek-track"
-         data-liquid-glass='{"radius":999,"bezel":7,"scale":34,"dispersion":0.1,"frost":1,"tint":"rgba(255,255,255,0.05)","specularOpacity":0.5}'></div>
+         data-liquid-glass='{"radius":999,"bezel":7,"scale":34,"dispersion":0.1,"frost":1,"tint":"rgba(255,255,255,0.12)","specularOpacity":0.5}'></div>
        <div class="seek-buf" id="seekBuf"></div>
        <div class="seek-fill" id="seekFill"></div>
        <div class="seek-thumb" id="seekThumb"
-         data-liquid-glass='{"radius":999,"bezel":13,"scale":66,"dispersion":0.26,"frost":0.5,"magnify":true,"magnifyBoost":1.9,"tint":"rgba(255,255,255,0.07)","specularOpacity":1}'></div>
+         data-liquid-glass='{"radius":999,"bezel":16,"scale":76,"dispersion":0.22,"frost":1.2,"magnify":true,"magnifyBoost":2.15,"tint":"rgba(255,255,255,0.28)","specularOpacity":1}'></div>
       </div>
-
-      <div class="time"><span id="tCur">0:00</span> / <span id="tDur">0:00</span></div>
 
       <a class="pbtn" id="dlBtn" aria-label="Download" download="sisyphus-workflow.webm"
         style="display:none"
@@ -305,7 +345,7 @@ const preview=document.getElementById("preview"),
   playBtn=document.getElementById("playBtn"),playIcon=document.getElementById("playIcon"),
   seek=document.getElementById("seek"),seekFill=document.getElementById("seekFill"),
   seekBuf=document.getElementById("seekBuf"),seekThumb=document.getElementById("seekThumb"),
-  tCur=document.getElementById("tCur"),tDur=document.getElementById("tDur"),
+  seekReadout=document.getElementById("seekReadout"),
   dlBtn=document.getElementById("dlBtn");
 
 function fmt(s){if(!isFinite(s))s=0;const m=Math.floor(s/60),x=Math.floor(s%60);
@@ -316,38 +356,71 @@ function showVideo(){document.body.classList.add("has-video");player.classList.a
 playBtn.addEventListener("click",()=>{preview.paused?preview.play():preview.pause()});
 preview.addEventListener("play",()=>playIcon.innerHTML=ICON_PAUSE);
 preview.addEventListener("pause",()=>playIcon.innerHTML=ICON_PLAY);
-preview.addEventListener("loadedmetadata",()=>{tDur.textContent=fmt(preview.duration)});
-preview.addEventListener("timeupdate",()=>{
-  if(dragging)return;
-  const p=preview.duration?preview.currentTime/preview.duration:0;
-  setSeek(p);tCur.textContent=fmt(preview.currentTime);
+preview.addEventListener("loadedmetadata",()=>{
+  updateSeekUI(preview.currentTime||0);
 });
+preview.addEventListener("timeupdate",()=>{if(!dragging)updateSeekUI(preview.currentTime)});
+preview.addEventListener("durationchange",()=>updateSeekUI(preview.currentTime||0));
 preview.addEventListener("progress",()=>{
   if(preview.buffered.length&&preview.duration){
     const e=preview.buffered.end(preview.buffered.length-1);
     seekBuf.style.width=(e/preview.duration*100)+"%";
   }
 });
+function clamp01(n){return Math.max(0,Math.min(1,n||0))}
+function scrubLabel(s){return (Number.isFinite(s)?s:0).toFixed(1)}
 function setSeek(p){
-  p=Math.max(0,Math.min(1,p));
+  p=clamp01(p);
   seekFill.style.width=(p*100)+"%";
   seekThumb.style.left=(p*100)+"%";
 }
+function updateSeekUI(time){
+  const d=Number.isFinite(preview.duration)?preview.duration:0;
+  time=Math.max(0,Math.min(time||0,d||0));
+  setSeek(d?time/d:0);
+  seekReadout.textContent=fmt(time)+" / "+fmt(d);
+  seek.setAttribute("aria-valuemax",scrubLabel(d));
+  seek.setAttribute("aria-valuenow",scrubLabel(time));
+  seek.setAttribute("aria-valuetext",fmt(time)+" of "+fmt(d));
+}
 let dragging=false;
 function seekFromEvent(e){
+  e.preventDefault();
   const r=seek.getBoundingClientRect();
-  const x=( (e.touches?e.touches[0].clientX:e.clientX) - r.left)/r.width;
-  const p=Math.max(0,Math.min(1,x));
-  setSeek(p);
-  if(preview.duration){preview.currentTime=p*preview.duration;tCur.textContent=fmt(p*preview.duration)}
+  const p=clamp01((e.clientX-r.left)/r.width);
+  const d=Number.isFinite(preview.duration)?preview.duration:0;
+  const next=d?p*d:0;
+  if(d)preview.currentTime=next;
+  updateSeekUI(next);
 }
+function endSeekDrag(e){
+  if(!dragging)return;
+  dragging=false;
+  seek.classList.remove("drag","thumb-pressed");
+  if(e&&seek.hasPointerCapture&&seek.hasPointerCapture(e.pointerId))seek.releasePointerCapture(e.pointerId);
+}
+function isThumbTarget(e){return e.target===seekThumb||seekThumb.contains(e.target)}
 seek.addEventListener("pointerdown",e=>{
-  dragging=true;seek.classList.add("drag");seek.setPointerCapture(e.pointerId);
+  dragging=true;
+  seek.classList.add("drag");
+  if(isThumbTarget(e))seek.classList.add("thumb-pressed");
+  seek.setPointerCapture(e.pointerId);
   seekFromEvent(e);
 });
 seek.addEventListener("pointermove",e=>{if(dragging)seekFromEvent(e)});
-seek.addEventListener("pointerup",e=>{dragging=false;seek.classList.remove("drag")});
-seek.addEventListener("pointercancel",()=>{dragging=false;seek.classList.remove("drag")});
+seek.addEventListener("pointerup",endSeekDrag);
+seek.addEventListener("pointercancel",endSeekDrag);
+seek.addEventListener("keydown",e=>{
+  if(!preview.duration)return;
+  const step=e.shiftKey?10:5;
+  if(e.key==="ArrowLeft"||e.key==="ArrowDown"){
+    e.preventDefault();preview.currentTime=Math.max(0,preview.currentTime-step);updateSeekUI(preview.currentTime);
+  }
+  if(e.key==="ArrowRight"||e.key==="ArrowUp"){
+    e.preventDefault();preview.currentTime=Math.min(preview.duration,preview.currentTime+step);updateSeekUI(preview.currentTime);
+  }
+});
+updateSeekUI(0);
 
 /* ----- recorder logic (unchanged behaviour) ----- */
 let recorder,chunks=[];
