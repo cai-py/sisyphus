@@ -19,6 +19,7 @@ html,body{min-height:100%}
 body{font-family:"Manrope",system-ui,sans-serif;color:var(--text);background:var(--bg);
   -webkit-font-smoothing:antialiased;overflow-x:hidden}
 
+/* gradient-mesh backdrop */
 .mesh{position:fixed;inset:-20%;z-index:-3;filter:blur(90px) saturate(135%)}
 .mesh span{position:absolute;border-radius:50%;mix-blend-mode:screen}
 .mesh .warm{width:70vw;height:70vw;left:26%;bottom:-22%;
@@ -43,6 +44,7 @@ body{font-family:"Manrope",system-ui,sans-serif;color:var(--text);background:var
 body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.4;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
 
+/* ===== Liquid Glass layer system (filled by liquid-glass.js) ===== */
 .lg{position:relative;isolation:isolate;-webkit-tap-highlight-color:transparent}
 .lg .lg-bg,.lg .lg-tint,.lg .lg-spec{position:absolute;inset:0;border-radius:inherit;pointer-events:none}
 .lg .lg-bg{z-index:0}
@@ -56,7 +58,7 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 .lg.lg-fallback .lg-tint{background:rgba(255,255,255,.08)!important}
 
 .stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 22px}
-.card{position:relative;width:100%;max-width:680px;border-radius:var(--r-xl);
+.card{position:relative;width:100%;max-width:660px;border-radius:var(--r-xl);
   animation:rise .9s var(--ease) both}
 .card .lg-tint{box-shadow:inset 0 0 0 1px var(--stroke),inset 0 1px 0 rgba(255,255,255,.4),
   0 40px 100px -30px rgba(0,0,0,.8)}
@@ -81,21 +83,19 @@ h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
 .lede{color:var(--text-dim);font-size:15.5px;max-width:46ch}
 
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:30px 0 24px}
-/* magnify-lens button: it physically lifts as the lens "bites" the page */
 .gbtn{border:none;background:none;cursor:pointer;font:inherit;color:var(--text);
   text-decoration:none;display:inline-flex;border-radius:var(--r-pill);
-  transition:transform .4s var(--spring),filter .35s var(--ease)}
+  transition:transform .45s var(--spring)}
 .gbtn .lg-content{padding:15px 26px;font-size:15px;font-weight:600;letter-spacing:-.01em}
-.gbtn .lg-tint{transition:box-shadow .35s var(--ease)}
+.gbtn .lg-tint{transition:box-shadow .35s var(--ease),background .35s var(--ease)}
 .gbtn .lg-spec{transition:opacity .35s var(--ease)}
-.gbtn:hover:not([disabled]){transform:scale(1.05);
-  filter:drop-shadow(0 16px 26px rgba(0,0,0,.5))}
+.gbtn:hover:not([disabled]){transform:scale(1.04)}
 .gbtn:hover:not([disabled]) .lg-tint{
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.24),inset 0 1px 1px rgba(255,255,255,.5),
-  0 18px 34px -12px rgba(0,0,0,.6),0 0 32px -6px var(--glow,transparent)}
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 1px rgba(255,255,255,.45),
+  0 14px 30px -12px rgba(0,0,0,.6),0 0 30px -6px var(--glow,transparent)}
 .gbtn:hover:not([disabled]) .lg-spec{opacity:1!important}
-.gbtn:active:not([disabled]){transform:scale(1.11);
-  filter:drop-shadow(0 24px 40px rgba(0,0,0,.6))}
+.gbtn.press{animation:press .42s var(--ease) both}
+@keyframes press{0%{transform:scale(1)}34%{transform:scale(.965)}62%{transform:scale(1.006)}100%{transform:scale(1)}}
 .gbtn:focus-visible{outline:none}
 .gbtn:focus-visible .lg-tint{box-shadow:0 0 0 3px color-mix(in srgb,var(--glow,#6cf) 60%,transparent),
   inset 0 1px 1px rgba(255,255,255,.4)}
@@ -113,57 +113,16 @@ body.recording .rec{color:var(--rec)}
 body.recording .rec b{box-shadow:0 0 12px var(--rec);animation:pulse 1.15s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
 
-/* ===== custom liquid-glass video player ===== */
-.player{position:relative;border-radius:var(--r-lg);overflow:hidden;margin-bottom:18px;
-  background:#04040a;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),
-  inset 0 0 0 1px rgba(255,255,255,.06)}
-.player video{display:block;width:100%;aspect-ratio:16/9;background:#04040a}
-.player .empty{position:absolute;inset:0;display:grid;place-content:center;gap:10px;
-  text-align:center;color:var(--text-faint);font-size:14px;pointer-events:none;transition:opacity .4s}
-.player .empty svg{width:34px;height:34px;margin:0 auto;opacity:.5}
-body.has-video .player .empty{opacity:0}
-
-.pbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:14px;
-  padding:16px 18px 18px;opacity:0;transform:translateY(8px);
-  transition:opacity .35s var(--ease),transform .35s var(--ease);
-  background:linear-gradient(0deg,rgba(0,0,0,.55),transparent)}
-.player:hover .pbar,.player.show .pbar{opacity:1;transform:none}
-body:not(.has-video) .pbar{display:none}
-
-.pbtn{position:relative;width:46px;height:46px;flex:none;border:none;background:none;
-  cursor:pointer;color:#fff;border-radius:50%;display:inline-flex;
-  transition:transform .35s var(--spring)}
-.pbtn .lg-content{position:absolute;inset:0;display:grid;place-items:center}
-.pbtn .lg-content svg{width:18px;height:18px;fill:currentColor}
-.pbtn:hover{transform:scale(1.08)}
-.pbtn:active{transform:scale(1.16)}
-
-.time{font-family:"JetBrains Mono",monospace;font-size:12px;color:rgba(255,255,255,.85);
-  flex:none;min-width:88px;text-align:center;letter-spacing:.02em;
-  text-shadow:0 1px 4px rgba(0,0,0,.6)}
-
-/* seekbar: glass track + refracting glass thumb (the demo's slider) */
-.seek{position:relative;flex:1;height:34px;display:flex;align-items:center;cursor:pointer;
-  touch-action:none}
-.seek-track{position:relative;width:100%;height:14px;border-radius:999px}
-.seek-track .lg-tint{box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),
-  inset 0 1px 2px rgba(0,0,0,.4)}
-.seek-fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;z-index:2;
-  background:linear-gradient(90deg,rgba(120,235,210,.5),rgba(95,182,255,.75));
-  box-shadow:0 0 14px -2px rgba(95,182,255,.6)}
-.seek-buf{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:999px;z-index:1;
-  background:rgba(255,255,255,.14)}
-.seek-thumb{position:absolute;top:50%;left:0;width:30px;height:30px;
-  transform:translate(-50%,-50%);border-radius:50%;z-index:3;
-  transition:width .25s var(--spring),height .25s var(--spring)}
-.seek-thumb .lg-tint{box-shadow:inset 0 0 0 1px rgba(255,255,255,.4),
-  inset 0 1px 2px rgba(255,255,255,.5),0 6px 16px -6px rgba(0,0,0,.7)}
-.seek.drag .seek-thumb{width:40px;height:40px}
-
 .panel{position:relative;border-radius:var(--r-lg);background:rgba(0,0,0,.22);
   border:1px solid rgba(255,255,255,.09);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 14px 32px -24px rgba(0,0,0,.95);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.preview-wrap{overflow:hidden;margin-bottom:18px}
+video{display:block;width:100%;aspect-ratio:16/9;background:#04040a;border-radius:inherit}
+.empty{position:absolute;inset:0;display:grid;place-content:center;gap:10px;text-align:center;
+  color:var(--text-faint);font-size:14px;pointer-events:none;transition:opacity .4s}
+.empty svg{width:34px;height:34px;margin:0 auto;opacity:.5}
+body.has-video .empty{opacity:0}
 .console{margin-bottom:18px}
 .console-bar{display:flex;align-items:center;gap:12px;padding:11px 16px;
   border-bottom:1px solid rgba(255,255,255,.07);font-size:12px;font-weight:500;
@@ -187,7 +146,6 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
 @media (max-width:560px){
   .pad{padding:26px 22px}.rec{margin-left:0}
   .gbtn{flex:1 1 auto}.gbtn .lg-content{width:100%;justify-content:center}
-  .time{min-width:72px;font-size:11px}
 }
 @media (prefers-reduced-motion:reduce){*,*::after,*::before{animation:none!important;transition:none!important}}
 </style>
@@ -215,15 +173,15 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
 
     <div class="controls">
      <button id="start" class="gbtn is-start"
-       data-liquid-glass='{"radius":999,"bezel":24,"scale":62,"dispersion":0.2,"frost":2,"magnify":true,"magnifyBoost":2.3,"tint":"rgba(255,255,255,0.05)"}'>
+       data-liquid-glass='{"radius":999,"bezel":24,"scale":68,"dispersion":0.2,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
        <span class="glyph"><i></i></span> Start recording
      </button>
      <button id="stop" class="gbtn is-stop" disabled
-       data-liquid-glass='{"radius":999,"bezel":24,"scale":62,"dispersion":0.2,"frost":2,"magnify":true,"magnifyBoost":2.3,"tint":"rgba(255,255,255,0.05)"}'>
+       data-liquid-glass='{"radius":999,"bezel":24,"scale":68,"dispersion":0.2,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
        <span class="glyph"><i></i></span> Stop recording
      </button>
      <a id="download" class="gbtn is-neutral" style="display:none;"
-       data-liquid-glass='{"radius":999,"bezel":24,"scale":62,"dispersion":0.2,"frost":2,"magnify":true,"magnifyBoost":2.3,"tint":"rgba(255,255,255,0.05)"}'>
+       data-liquid-glass='{"radius":999,"bezel":24,"scale":68,"dispersion":0.2,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
        Download recording
      </a>
      <span class="rec"
@@ -232,39 +190,14 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
      </span>
     </div>
 
-    <!-- custom liquid-glass video player -->
-    <div class="player" id="player">
-     <video id="preview" playsinline></video>
+    <div class="panel preview-wrap">
+     <video id="preview" controls></video>
      <div class="empty">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
        <rect x="2.5" y="5" width="19" height="14" rx="3"/>
        <path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/>
       </svg>
       <span>Your recording preview will appear here</span>
-     </div>
-
-     <div class="pbar" id="pbar">
-      <button class="pbtn" id="playBtn" aria-label="Play / pause"
-        data-liquid-glass='{"radius":999,"bezel":16,"scale":58,"dispersion":0.22,"frost":1.5,"magnify":true,"magnifyBoost":2.0,"tint":"rgba(255,255,255,0.06)"}'>
-        <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      </button>
-
-      <div class="seek" id="seek">
-       <div class="seek-track"
-         data-liquid-glass='{"radius":999,"bezel":7,"scale":34,"dispersion":0.1,"frost":1,"tint":"rgba(255,255,255,0.05)","specularOpacity":0.5}'></div>
-       <div class="seek-buf" id="seekBuf"></div>
-       <div class="seek-fill" id="seekFill"></div>
-       <div class="seek-thumb" id="seekThumb"
-         data-liquid-glass='{"radius":999,"bezel":13,"scale":66,"dispersion":0.26,"frost":0.5,"magnify":true,"magnifyBoost":1.9,"tint":"rgba(255,255,255,0.07)","specularOpacity":1}'></div>
-      </div>
-
-      <div class="time"><span id="tCur">0:00</span> / <span id="tDur">0:00</span></div>
-
-      <a class="pbtn" id="dlBtn" aria-label="Download" download="sisyphus-workflow.webm"
-        style="display:none"
-        data-liquid-glass='{"radius":999,"bezel":16,"scale":58,"dispersion":0.22,"frost":1.5,"magnify":true,"magnifyBoost":2.0,"tint":"rgba(255,255,255,0.06)"}'>
-        <svg viewBox="0 0 24 24"><path d="M12 3v10m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </a>
      </div>
     </div>
 
@@ -278,13 +211,13 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
      <p class="note">Upload a saved WebM recording manually.</p>
      <div class="file-row">
       <label class="gbtn is-neutral file-pick"
-        data-liquid-glass='{"radius":999,"bezel":22,"scale":58,"dispersion":0.18,"frost":2,"magnify":true,"magnifyBoost":2.1,"tint":"rgba(255,255,255,0.05)"}'>
+        data-liquid-glass='{"radius":999,"bezel":22,"scale":60,"dispersion":0.18,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
         Choose file
         <input id="manualFile" type="file" accept="video/webm,video/*">
       </label>
       <span class="file-name" id="fileName">No file selected</span>
       <button id="manualUpload" class="gbtn is-neutral"
-        data-liquid-glass='{"radius":999,"bezel":22,"scale":58,"dispersion":0.18,"frost":2,"magnify":true,"magnifyBoost":2.1,"tint":"rgba(255,255,255,0.05)"}'>
+        data-liquid-glass='{"radius":999,"bezel":22,"scale":60,"dispersion":0.18,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
         Upload saved recording
       </button>
      </div>
@@ -296,90 +229,32 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
 
 <script src="liquid-glass.js"></script>
 <script>
-const ICON_PLAY='<path d="M8 5v14l11-7z"/>';
-const ICON_PAUSE='<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';
-
-const preview=document.getElementById("preview"),
-  status=document.getElementById("status"),recLabel=document.getElementById("recLabel"),
-  player=document.getElementById("player"),pbar=document.getElementById("pbar"),
-  playBtn=document.getElementById("playBtn"),playIcon=document.getElementById("playIcon"),
-  seek=document.getElementById("seek"),seekFill=document.getElementById("seekFill"),
-  seekBuf=document.getElementById("seekBuf"),seekThumb=document.getElementById("seekThumb"),
-  tCur=document.getElementById("tCur"),tDur=document.getElementById("tDur"),
-  dlBtn=document.getElementById("dlBtn");
-
-function fmt(s){if(!isFinite(s))s=0;const m=Math.floor(s/60),x=Math.floor(s%60);
-  return m+":"+String(x).padStart(2,"0")}
-function showVideo(){document.body.classList.add("has-video");player.classList.add("show")}
-
-/* ----- video player wiring ----- */
-playBtn.addEventListener("click",()=>{preview.paused?preview.play():preview.pause()});
-preview.addEventListener("play",()=>playIcon.innerHTML=ICON_PAUSE);
-preview.addEventListener("pause",()=>playIcon.innerHTML=ICON_PLAY);
-preview.addEventListener("loadedmetadata",()=>{tDur.textContent=fmt(preview.duration)});
-preview.addEventListener("timeupdate",()=>{
-  if(dragging)return;
-  const p=preview.duration?preview.currentTime/preview.duration:0;
-  setSeek(p);tCur.textContent=fmt(preview.currentTime);
-});
-preview.addEventListener("progress",()=>{
-  if(preview.buffered.length&&preview.duration){
-    const e=preview.buffered.end(preview.buffered.length-1);
-    seekBuf.style.width=(e/preview.duration*100)+"%";
-  }
-});
-function setSeek(p){
-  p=Math.max(0,Math.min(1,p));
-  seekFill.style.width=(p*100)+"%";
-  seekThumb.style.left=(p*100)+"%";
-}
-let dragging=false;
-function seekFromEvent(e){
-  const r=seek.getBoundingClientRect();
-  const x=( (e.touches?e.touches[0].clientX:e.clientX) - r.left)/r.width;
-  const p=Math.max(0,Math.min(1,x));
-  setSeek(p);
-  if(preview.duration){preview.currentTime=p*preview.duration;tCur.textContent=fmt(p*preview.duration)}
-}
-seek.addEventListener("pointerdown",e=>{
-  dragging=true;seek.classList.add("drag");seek.setPointerCapture(e.pointerId);
-  seekFromEvent(e);
-});
-seek.addEventListener("pointermove",e=>{if(dragging)seekFromEvent(e)});
-seek.addEventListener("pointerup",e=>{dragging=false;seek.classList.remove("drag")});
-seek.addEventListener("pointercancel",()=>{dragging=false;seek.classList.remove("drag")});
-
-/* ----- recorder logic (unchanged behaviour) ----- */
-let recorder,chunks=[];
-const startBtn=document.getElementById("start"),stopBtn=document.getElementById("stop"),
-  download=document.getElementById("download");
-
 window.addEventListener("load",()=>{
   document.querySelectorAll(".gbtn").forEach(b=>{
     b.addEventListener("pointerdown",()=>{
       if(b.hasAttribute("disabled"))return;
-      b.style.transition="transform .12s var(--ease)";
-      setTimeout(()=>b.style.transition="",160);
+      b.classList.remove("press");void b.offsetWidth;b.classList.add("press");
     });
+    b.addEventListener("animationend",e=>{if(e.animationName==="press")b.classList.remove("press")});
   });
 });
 
-function loadIntoPlayer(url,name){
-  preview.src=url;showVideo();
-  dlBtn.href=url;dlBtn.setAttribute("download",name);dlBtn.style.display="inline-flex";
-  download.href=url;download.download=name;download.style.display="inline-flex";
-}
+let recorder,chunks=[];
+const startBtn=document.getElementById("start"),stopBtn=document.getElementById("stop"),
+  download=document.getElementById("download"),preview=document.getElementById("preview"),
+  status=document.getElementById("status"),recLabel=document.getElementById("recLabel");
+function showVideo(){document.body.classList.add("has-video")}
 
 startBtn.onclick=async()=>{
-  chunks=[];download.style.display="none";dlBtn.style.display="none";
-  preview.removeAttribute("src");
+  chunks=[];download.style.display="none";preview.removeAttribute("src");
   const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
   recorder=new MediaRecorder(stream,{mimeType:"video/webm"});
   recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
   recorder.onstop=()=>{
     stream.getTracks().forEach(t=>t.stop());
     const blob=new Blob(chunks,{type:"video/webm"}),url=URL.createObjectURL(blob);
-    loadIntoPlayer(url,"sisyphus-workflow.webm");
+    preview.src=url;showVideo();download.href=url;download.download="sisyphus-workflow.webm";
+    download.style.display="inline-flex";
     document.body.classList.remove("recording");recLabel.textContent="Processing";
     status.textContent="Recording complete. Uploading to Sisyphus...";
     const fd=new FormData();fd.append("video",blob,"sisyphus-workflow.webm");
@@ -402,7 +277,9 @@ manualFile.onchange=()=>{const f=manualFile.files[0];fileName.textContent=f?f.na
 manualUpload.onclick=()=>{
   const f=manualFile.files[0];
   if(!f){status.textContent="Select a saved WebM recording first.";return}
-  loadIntoPlayer(URL.createObjectURL(f),f.name);
+  const url=URL.createObjectURL(f);
+  preview.src=url;showVideo();download.href=url;download.download=f.name;
+  download.style.display="inline-flex";
   status.textContent="Uploading saved recording to Sisyphus...";
   const fd=new FormData();fd.append("video",f,f.name);
   fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{

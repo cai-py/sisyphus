@@ -254,6 +254,8 @@
         tint: "rgba(255,255,255,0.05)",
         specularOpacity: 0.85,
         frost: 2,           // base backdrop blur (px)
+        magnify: false,     // act like the draggable magnifying lens
+        magnifyBoost: 2.15, // peak refraction multiplier on press
       },
       options || {}
     );
@@ -322,7 +324,50 @@
       raf = requestAnimationFrame(build);
     });
     ro.observe(el);
-    return { rebuild: build };
+
+    /* ---- magnifying-glass behaviour (the demo's draggable lens) ----
+       On press the lens "bites" into the page: refraction scale ramps up,
+       the surface lifts with a deeper shadow and a touch of zoom — exactly
+       the feel of dragging the capsule in the repo, but driven by pointer
+       state on the button itself. The displacement filter's `scale` is the
+       single animated knob the kube article recommends (no map rebuild). */
+    const api = { rebuild: build };
+    if (o.magnify) {
+      const fid = uid + "-f";
+      let cur = o.scale, target = o.scale, anim = 0;
+      const peak = o.scale * (o.magnifyBoost || 2.15);
+      const setScale = (v) => {
+        const f = document.getElementById(fid);
+        if (!f) return;
+        f.querySelectorAll("feDisplacementMap").forEach((dm, i) => {
+          const base = [1 + o.dispersion, 1, 1 - o.dispersion][i] || 1;
+          dm.setAttribute("scale", (v * base).toFixed(2));
+        });
+      };
+      const tick = () => {
+        cur += (target - cur) * 0.18;
+        setScale(cur);
+        if (Math.abs(target - cur) > 0.4) anim = requestAnimationFrame(tick);
+        else { setScale(target); anim = 0; }
+      };
+      const go = (t) => {
+        target = t;
+        if (!anim) anim = requestAnimationFrame(tick);
+      };
+      const enter = () => { if (!el.hasAttribute("disabled")) go(o.scale * 1.35); };
+      const leave = () => go(o.scale);
+      const down  = () => { if (!el.hasAttribute("disabled")) go(peak); };
+      const up    = () => go(el.matches(":hover") ? o.scale * 1.35 : o.scale);
+      el.addEventListener("pointerenter", enter);
+      el.addEventListener("pointerleave", leave);
+      el.addEventListener("pointerdown", down);
+      window.addEventListener("pointerup", up);
+      // re-apply current scale after a resize rebuild
+      api.rebuild = () => { build(); setScale(cur); };
+      ro.disconnect();
+      ro.observe(el);
+    }
+    return api;
   }
 
   function auto() {
