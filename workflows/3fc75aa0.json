@@ -1,0 +1,25 @@
+{
+  "run_id": "3fc75aa0",
+  "workflow_name": "Record UC Santa Cruz page",
+  "intent": "Automate screen recording of the UC Santa Cruz website using Sisyphus Screen Recorder",
+  "trigger_command": "/record",
+  "inputs_needed": "URL of UC Santa Cruz site (https://ucsc.edu)",
+  "automation_steps": [
+    "Open Firefox and navigate to https://ucsc.edu",
+    "Click the Sisyphus Screen Recorder extension to start recording",
+    "Navigate to the \u201cResources\u201d section and perform any required interactions (click, scroll)"
+  ],
+  "best_execution_method": "browser",
+  "missing_info": "Specific UI elements to interact with on the UC Santa Cruz page, exact recording duration, any login credentials if needed",
+  "frames_analyzed": [
+    "frames/3fc75aa0/frame_001.jpg",
+    "frames/3fc75aa0/frame_004.jpg",
+    "frames/3fc75aa0/frame_008.jpg",
+    "frames/3fc75aa0/frame_011.jpg",
+    "frames/3fc75aa0/frame_015.jpg",
+    "frames/3fc75aa0/frame_018.jpg"
+  ],
+  "source_video": "uploads/3fc75aa0.webm",
+  "raw_model_output": "Workflow name: Record UC Santa Cruz page\nIntent: Automate screen recording of the UC Santa Cruz website using Sisyphus Screen Recorder\nTrigger command: /record\nInputs needed: URL of UC Santa Cruz site (https://ucsc.edu)\nAutomation step 1: Open Firefox and navigate to https://ucsc.edu\nAutomation step 2: Click the Sisyphus Screen Recorder extension to start recording\nAutomation step 3: Navigate to the \u201cResources\u201d section and perform any required interactions (click, scroll)\nBest execution method: browser\nMissing info: Specific UI elements to interact with on the UC Santa Cruz page, exact recording duration, any login credentials if needed",
+  "status": "draft"
+}

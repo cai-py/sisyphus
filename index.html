@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Sisyphus Screen Recorder</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: 18px;
+      padding: 12px 18px;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+
+    video {
+      width: 100%;
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+    }
+
+    pre {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sisyphus Screen Recorder</h1>
+
+  <p>
+    Record a workflow once. Sisyphus uses local Nemotron vision to turn the recording into a reusable automation plan.
+  </p>
+
+  <pre>
+Demo idea:
+1. Open a website or app
+2. Complete a short task you want automated
+3. Stop recording
+4. Sisyphus extracts frames and creates an automation spec
+  </pre>
+
+  <button id="start">Start recording</button>
+  <button id="stop" disabled>Stop recording</button>
+  <a id="download" style="display:none;">Download recording</a>
+
+  <hr>
+  <p><strong>Backup:</strong> Upload a saved WebM recording manually.</p>
+  <input id="manualFile" type="file" accept="video/webm,video/*">
+  <button id="manualUpload">Upload saved recording</button>
+
+  <video id="preview" controls></video>
+  <pre id="status">Ready.</pre>
+
+  <script>
+    let recorder;
+    let chunks = [];
+
+    const startBtn = document.getElementById("start");
+    const stopBtn = document.getElementById("stop");
+    const download = document.getElementById("download");
+    const preview = document.getElementById("preview");
+    const status = document.getElementById("status");
+
+    startBtn.onclick = async () => {
+      chunks = [];
+      download.style.display = "none";
+      preview.removeAttribute("src");
+
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true
+        });
+      } catch (err) {
+        status.textContent = "Could not start recording: " + err.message;
+        return;
+      }
+
+      recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+
+      recorder.ondataavailable = event => {
+        if (event.data.size > 0) chunks.push(event.data);
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+
+        const blob = new Blob(chunks, { type: "video/webm" });
+        const url = URL.createObjectURL(blob);
+
+        preview.src = url;
+        download.href = url;
+        download.download = "sisyphus-workflow.webm";
+        download.style.display = "inline-block";
+        download.textContent = "Download recording";
+
+        status.textContent = "Recording complete. Uploading to Sisyphus...";
+
+        const formData = new FormData();
+        formData.append("video", blob, "sisyphus-workflow.webm");
+
+        fetch("/upload", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          status.textContent =
+            "Upload complete.\n" +
+            "Run ID: " + data.run_id + "\n" +
+            "Frames extracted: " + data.frames.length + "\n" +
+            data.frames.join("\n");
+        })
+        .catch(err => {
+          status.textContent = "Upload failed: " + err;
+        });
+      };
+
+      recorder.start();
+
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      status.textContent = "Recording...";
+    };
+
+    stopBtn.onclick = () => {
+      recorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+
+    document.getElementById("manualUpload").onclick = () => {
+      const file = document.getElementById("manualFile").files[0];
+      if (!file) {
+        status.textContent = "No file selected.";
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+      status.textContent = "Uploading saved recording...";
+
+      const formData = new FormData();
+      formData.append("video", file, file.name);
+
+      fetch("/upload", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        status.textContent =
+          "Upload complete.\n" +
+          "Run ID: " + data.run_id + "\n" +
+          "Frames extracted: " + data.frames.length + "\n" +
+          data.frames.join("\n");
+      })
+      .catch(err => {
+        status.textContent = "Upload failed: " + err;
+      });
+    };
+  </script>
+</body>
+</html>

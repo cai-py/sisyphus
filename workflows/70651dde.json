@@ -1,0 +1,21 @@
+{
+  "run_id": "70651dde",
+  "workflow_name": "Record Best Track automation steps",
+  "intent": "Autom",
+  "trigger_command": "/run_70651dde",
+  "inputs_needed": "",
+  "automation_steps": [],
+  "best_execution_method": "manual_review",
+  "missing_info": "",
+  "frames_analyzed": [
+    "frames/70651dde/frame_001.jpg",
+    "frames/70651dde/frame_003.jpg",
+    "frames/70651dde/frame_005.jpg",
+    "frames/70651dde/frame_007.jpg",
+    "frames/70651dde/frame_009.jpg",
+    "frames/70651dde/frame_010.jpg"
+  ],
+  "source_video": "uploads/70651dde.webm",
+  "raw_model_output": "Workflow name: Record Best Track automation steps  \nIntent: Autom",
+  "status": "draft"
+}
