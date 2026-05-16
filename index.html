@@ -1,66 +1,479 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sisyphus Screen Recorder</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg: #050507;
+      --text: #f4f4f8;
+      --text-dim: rgba(244, 244, 248, 0.62);
+      --text-faint: rgba(244, 244, 248, 0.38);
+
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-2: rgba(255, 255, 255, 0.07);
+      --glass-inset: rgba(0, 0, 0, 0.22);
+      --stroke: rgba(255, 255, 255, 0.14);
+      --hi: rgba(255, 255, 255, 0.5);
+
+      --rec: #ff4d5e;
+
+      --r-xl: 36px;
+      --r-lg: 24px;
+      --r-pill: 999px;
+
+      --ease: cubic-bezier(.2, .9, .2, 1);
+      --spring: cubic-bezier(.34, 1.56, .35, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+
     body {
-      font-family: system-ui, sans-serif;
-      max-width: 720px;
-      margin: 40px auto;
-      line-height: 1.5;
+      font-family: "Manrope", system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    button {
-      font-size: 18px;
-      padding: 12px 18px;
-      margin-right: 8px;
-      cursor: pointer;
+    /* ============ gradient-mesh background ============ */
+    .mesh { position: fixed; inset: -20%; z-index: -3; filter: blur(90px) saturate(135%); }
+    .mesh span { position: absolute; border-radius: 50%; mix-blend-mode: screen; }
+    .mesh .warm {
+      width: 70vw; height: 70vw; left: 26%; bottom: -22%;
+      background: radial-gradient(circle at 50% 50%, #ff7a36 0%, #ff5a2a 32%, rgba(180,40,20,0) 68%);
+      animation: float1 30s var(--ease) infinite alternate;
+    }
+    .mesh .warm-s {
+      width: 38vw; height: 38vw; left: 40%; bottom: 4%;
+      background: radial-gradient(circle at 50% 50%, #ffae5e 0%, rgba(255,120,40,0) 66%);
+      animation: float2 24s var(--ease) infinite alternate;
+    }
+    .mesh .cool {
+      width: 62vw; height: 62vw; right: -16%; top: -20%;
+      background: radial-gradient(circle at 50% 50%, #2f74ff 0%, #1f4fd0 38%, rgba(20,30,90,0) 70%);
+      animation: float2 34s var(--ease) infinite alternate;
+    }
+    .mesh .cool-s {
+      width: 34vw; height: 34vw; right: 4%; top: 8%;
+      background: radial-gradient(circle at 50% 50%, #45d2ff 0%, rgba(40,140,220,0) 66%);
+      animation: float1 27s var(--ease) infinite alternate;
+    }
+    .mesh .seam {
+      width: 40vw; height: 40vw; right: 14%; top: 32%;
+      background: radial-gradient(circle at 50% 50%, rgba(255,90,140,0.5) 0%, rgba(120,40,90,0) 70%);
+      animation: float1 31s var(--ease) infinite alternate;
+    }
+    @keyframes float1 { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(-4vw,3vw,0) scale(1.14); } }
+    @keyframes float2 { from { transform: translate3d(0,0,0) scale(1.06); } to { transform: translate3d(3vw,-2vw,0) scale(0.94); } }
+
+    .mesh-vignette {
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background: radial-gradient(130% 100% at 50% 60%, transparent 38%, rgba(5,5,7,0.55) 72%, #050507 100%);
+    }
+    body::after {
+      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.4;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
     }
 
-    video {
-      width: 100%;
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      border-radius: 12px;
+    /* hidden svg filter holder */
+    .svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+    /* ============ layout ============ */
+    .stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 48px 22px; }
+
+    .card {
+      position: relative; width: 100%; max-width: 660px; padding: 40px;
+      border-radius: var(--r-xl); background: var(--glass);
+      backdrop-filter: blur(22px) saturate(170%);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+      box-shadow:
+        0 40px 100px -30px rgba(0,0,0,0.8),
+        inset 0 1px 0 var(--hi),
+        inset 0 -30px 60px -44px rgba(255,255,255,0.08);
+      animation: rise 0.95s var(--ease) both;
+    }
+    /* real refraction on the card backdrop (Chromium/Safari) */
+    @supports (backdrop-filter: url("#x")) {
+      .card {
+        backdrop-filter: url(#lg-soft) blur(7px) saturate(180%);
+        -webkit-backdrop-filter: url(#lg-soft) blur(7px) saturate(180%);
+      }
+    }
+    .card::after {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.22));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); filter: blur(8px); }
+      to   { opacity: 1; transform: none; filter: none; }
     }
 
-    pre {
-      background: #f5f5f5;
-      padding: 12px;
-      border-radius: 8px;
-      white-space: pre-wrap;
+    .stagger > * { animation: fadeUp 0.85s var(--ease) both; }
+    .stagger > *:nth-child(1) { animation-delay: 0.10s; }
+    .stagger > *:nth-child(2) { animation-delay: 0.18s; }
+    .stagger > *:nth-child(3) { animation-delay: 0.26s; }
+    .stagger > *:nth-child(4) { animation-delay: 0.34s; }
+    .stagger > *:nth-child(5) { animation-delay: 0.42s; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+    /* ============ header ============ */
+    header { margin-bottom: 28px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px 7px 12px; border-radius: var(--r-pill);
+      background: var(--glass-2); border: 1px solid var(--stroke);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+      font-size: 12.5px; font-weight: 600; color: var(--text-dim);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #38d6ff; box-shadow: 0 0 10px #38d6ff; }
+
+    h1 {
+      font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+      font-size: clamp(36px, 6.4vw, 56px); letter-spacing: -0.03em; line-height: 1;
+      margin: 18px 0 12px;
+      background: linear-gradient(180deg, #fff, rgba(255,255,255,0.58));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .lede { color: var(--text-dim); font-size: 15.5px; max-width: 46ch; }
+
+    /* ============ liquid-glass buttons ============ */
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 30px 0 24px; }
+
+    .gbtn {
+      position: relative; display: inline-flex; isolation: isolate;
+      border: none; background: none; padding: 0; cursor: pointer;
+      font: inherit; color: var(--text); text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* colored bloom behind the glass */
+    .gbtn .aura {
+      position: absolute; inset: -14px; border-radius: var(--r-pill);
+      background: radial-gradient(60% 60% at 50% 50%, var(--glow,#62f0d0) 0%, rgba(0,0,0,0) 72%);
+      opacity: 0; transform: scale(0.6); filter: blur(14px);
+      transition: opacity 0.5s var(--ease), transform 0.5s var(--spring);
+      z-index: -1; pointer-events: none;
+    }
+
+    /* the refractive frosted pill */
+    .gbtn .surface {
+      position: relative; display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 24px; border-radius: var(--r-pill);
+      background: var(--glass); border: 1px solid var(--stroke);
+      backdrop-filter: blur(6px) saturate(180%) brightness(1.1);
+      -webkit-backdrop-filter: blur(6px) saturate(180%) brightness(1.1);
+      font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+      box-shadow:
+        0 10px 26px -14px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.42),
+        inset 0 -8px 18px -14px rgba(255,255,255,0.3);
+      transform-origin: center;
+      transition: background 0.4s var(--ease), box-shadow 0.4s var(--ease), opacity 0.3s var(--ease);
+      will-change: transform;
+    }
+    /* swap in true refraction+dispersion where supported */
+    @supports (backdrop-filter: url("#x")) {
+      .gbtn .surface {
+        backdrop-filter: url(#lg-dist) saturate(180%) brightness(1.08);
+        -webkit-backdrop-filter: url(#lg-dist) saturate(180%) brightness(1.08);
+      }
+    }
+    /* bright dispersive rim (refraction edge) */
+    .gbtn .surface::before {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.4px;
+      background: conic-gradient(from 130deg,
+        rgba(255,255,255,0.95), rgba(120,200,255,0.35) 18%,
+        rgba(255,255,255,0.05) 34%, rgba(255,255,255,0) 52%,
+        rgba(255,150,210,0.3) 70%, rgba(255,255,255,0.85) 100%);
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+    }
+    /* top specular reflection */
+    .gbtn .surface::after {
+      content: ""; position: absolute; inset: 0;
+      border-radius: inherit; overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 46%);
+      opacity: 0.6; pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+
+    /* HOVER — aura blooms, glass grows + refracts harder (like active media btn) */
+    .gbtn:hover:not([disabled]) .aura { opacity: 0.9; transform: scale(1); }
+    .gbtn:hover:not([disabled]) .surface {
+      transform: scale(1.045);
+      background: var(--glass-2);
+      box-shadow:
+        0 18px 40px -16px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.6),
+        inset 0 -10px 22px -14px rgba(255,255,255,0.45);
+    }
+    .gbtn:hover:not([disabled]) .surface::after { opacity: 1; }
+
+    /* PRESS — soft push-in, faint give, quick settle (no cartoon bounce) */
+    .gbtn.is-jelly .surface { animation: press 0.40s var(--ease) both; }
+    @keyframes press {
+      0%   { transform: scale(1, 1); }
+      32%  { transform: scale(0.965, 0.975); }  /* gentle push-in */
+      60%  { transform: scale(1.008, 0.997); }  /* slight give */
+      100% { transform: scale(1, 1); }
+    }
+    .gbtn.is-jelly .aura {
+      animation: auraFlare 0.55s var(--ease) both;
+    }
+    @keyframes auraFlare {
+      0%   { opacity: 0.35; transform: scale(0.75); }
+      28%  { opacity: 0.9;  transform: scale(1.06); }
+      100% { opacity: 0;    transform: scale(0.9); }
+    }
+
+    .gbtn:focus-visible .surface {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) 65%, transparent), inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    .gbtn[disabled] { cursor: not-allowed; }
+    .gbtn[disabled] .surface { opacity: 0.34; }
+    .gbtn[disabled] .aura { opacity: 0 !important; }
+
+    .gbtn.is-start   { --glow: #5cf0c8; }
+    .gbtn.is-stop    { --glow: #ff5d6e; }
+    .gbtn.is-neutral { --glow: #5fb6ff; }
+
+    .glyph { width: 15px; height: 15px; display: inline-grid; place-items: center; }
+    .glyph i { display: block; width: 10px; height: 10px; background: currentColor; border-radius: 50%; }
+    .is-stop .glyph i { border-radius: 3px; }
+
+    .rec {
+      display: inline-flex; align-items: center; gap: 9px; margin-left: auto;
+      padding: 9px 16px; border-radius: var(--r-pill);
+      font-size: 13px; font-weight: 600; letter-spacing: 0.03em; color: var(--text-faint);
+      background: var(--glass); border: 1px solid var(--stroke);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+    }
+    .rec b { width: 9px; height: 9px; border-radius: 50%; background: currentColor; transition: box-shadow 0.3s var(--ease); }
+    body.recording .rec { color: var(--rec); border-color: rgba(255,77,94,0.45); }
+    body.recording .rec b { box-shadow: 0 0 12px var(--rec); animation: pulse 1.15s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.65); } }
+
+    /* ============ panels ============ */
+    .panel {
+      position: relative; border-radius: var(--r-lg);
+      background: var(--glass-inset); border: 1px solid rgba(255,255,255,0.09);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.09), inset 0 14px 32px -24px rgba(0,0,0,0.95);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .preview-wrap { overflow: hidden; margin-bottom: 18px; }
+    video { display: block; width: 100%; aspect-ratio: 16/9; background: #04040a; border-radius: inherit; }
+    .empty {
+      position: absolute; inset: 0; display: grid; place-content: center; gap: 10px;
+      text-align: center; color: var(--text-faint); font-size: 14px; pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+    .empty svg { width: 34px; height: 34px; margin: 0 auto; opacity: 0.5; }
+    body.has-video .empty { opacity: 0; }
+
+    .console { margin-bottom: 18px; }
+    .console-bar {
+      display: flex; align-items: center; gap: 12px; padding: 11px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 12px; font-weight: 500; color: var(--text-faint); letter-spacing: 0.04em;
+    }
+    .lights { display: flex; gap: 7px; }
+    .lights i { width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); }
+    .lights i:nth-child(1) { background: #ff5f57; }
+    .lights i:nth-child(2) { background: #febc2e; }
+    .lights i:nth-child(3) { background: #28c840; }
+    pre#status {
+      font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; line-height: 1.7;
+      color: var(--text-dim); padding: 16px 18px; white-space: pre-wrap; word-break: break-word;
+      max-height: 220px; overflow: auto;
+    }
+
+    .backup { padding: 22px; }
+    .backup-title { font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 4px; }
+    .backup p.note { color: var(--text-dim); font-size: 14px; margin-bottom: 16px; }
+    .file-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .file-pick { overflow: hidden; }
+    .file-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 2; }
+    .file-name {
+      flex: 1; min-width: 130px; font-size: 13px; color: var(--text-faint);
+      font-family: "JetBrains Mono", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    @media (max-width: 560px) {
+      .card { padding: 26px 22px; }
+      .rec { margin-left: 0; }
+      .gbtn { flex: 1 1 auto; }
+      .gbtn .surface { width: 100%; justify-content: center; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::after, *::before { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
-  <h1>Sisyphus Screen Recorder</h1>
+  <!-- ===== Liquid-glass refraction + dispersion filters ===== -->
+  <svg class="svg-defs" aria-hidden="true">
+    <defs>
+      <!-- strong: per-channel RGB displacement = chromatic dispersion at edges -->
+      <filter id="lg-dist" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.009 0.013" numOctaves="2" seed="7" result="turb">
+          <!-- living lens: the warp field slowly breathes so reflections track the moving backdrop -->
+          <animate attributeName="baseFrequency"
+            dur="14s" repeatCount="indefinite"
+            values="0.009 0.013; 0.013 0.009; 0.008 0.015; 0.009 0.013"
+            calcMode="spline"
+            keyTimes="0; 0.34; 0.7; 1"
+            keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"/>
+        </feTurbulence>
+        <feGaussianBlur in="turb" stdDeviation="2.4" result="soft"/>
 
-  <p>
-    Record a workflow once. Sisyphus uses local Nemotron vision to turn the recording into a reusable automation plan.
-  </p>
+        <feDisplacementMap in="SourceGraphic" in2="soft" xChannelSelector="R" yChannelSelector="G" result="dR">
+          <animate attributeName="scale" dur="11s" repeatCount="indefinite"
+            values="64; 74; 58; 64" calcMode="spline"
+            keyTimes="0; 0.35; 0.7; 1"
+            keySplines="0.45 0 0.2 1; 0.45 0 0.2 1; 0.45 0 0.2 1"/>
+        </feDisplacementMap>
+        <feColorMatrix in="dR" type="matrix"
+          values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="R"/>
 
-  <pre>
-Demo idea:
-1. Open a website or app
-2. Complete a short task you want automated
-3. Stop recording
-4. Sisyphus extracts frames and creates an automation spec
-  </pre>
+        <feDisplacementMap in="SourceGraphic" in2="soft" scale="50"
+          xChannelSelector="R" yChannelSelector="G" result="dG"/>
+        <feColorMatrix in="dG" type="matrix"
+          values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="G"/>
 
-  <button id="start">Start recording</button>
-  <button id="stop" disabled>Stop recording</button>
-  <a id="download" style="display:none;">Download recording</a>
+        <feDisplacementMap in="SourceGraphic" in2="soft" xChannelSelector="R" yChannelSelector="G" result="dB">
+          <animate attributeName="scale" dur="11s" repeatCount="indefinite"
+            values="36; 30; 42; 36" calcMode="spline"
+            keyTimes="0; 0.35; 0.7; 1"
+            keySplines="0.45 0 0.2 1; 0.45 0 0.2 1; 0.45 0 0.2 1"/>
+        </feDisplacementMap>
+        <feColorMatrix in="dB" type="matrix"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="B"/>
 
-  <hr>
-  <p><strong>Backup:</strong> Upload a saved WebM recording manually.</p>
-  <input id="manualFile" type="file" accept="video/webm,video/*">
-  <button id="manualUpload">Upload saved recording</button>
+        <feBlend in="R" in2="G" mode="screen" result="RG"/>
+        <feBlend in="RG" in2="B" mode="screen" result="RGB"/>
+        <feGaussianBlur in="RGB" stdDeviation="0.5"/>
+      </filter>
 
-  <video id="preview" controls></video>
-  <pre id="status">Ready.</pre>
+      <!-- soft: gentle whole-surface warp for the big card -->
+      <filter id="lg-soft" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.006 0.008" numOctaves="2" seed="3" result="t">
+          <animate attributeName="baseFrequency"
+            dur="22s" repeatCount="indefinite"
+            values="0.006 0.008; 0.008 0.006; 0.006 0.008"
+            calcMode="spline" keyTimes="0; 0.5; 1"
+            keySplines="0.4 0 0.2 1; 0.4 0 0.2 1"/>
+        </feTurbulence>
+        <feGaussianBlur in="t" stdDeviation="3" result="s"/>
+        <feDisplacementMap in="SourceGraphic" in2="s" scale="26"
+          xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div class="mesh" aria-hidden="true">
+    <span class="cool"></span><span class="cool-s"></span><span class="seam"></span>
+    <span class="warm"></span><span class="warm-s"></span>
+  </div>
+  <div class="mesh-vignette" aria-hidden="true"></div>
+
+  <div class="stage">
+    <main class="card">
+      <div class="stagger">
+        <header>
+          <span class="badge"><span class="dot"></span> Local Nemotron · on-device</span>
+          <h1>Sisyphus<br>Screen Recorder</h1>
+          <p class="lede">
+            Record a workflow once. Sisyphus turns the capture into
+            reusable agent steps — entirely on your machine.
+          </p>
+        </header>
+
+        <div class="controls">
+          <button id="start" class="gbtn is-start">
+            <span class="aura"></span>
+            <span class="surface"><span class="glyph"><i></i></span> Start recording</span>
+          </button>
+
+          <button id="stop" class="gbtn is-stop" disabled>
+            <span class="aura"></span>
+            <span class="surface"><span class="glyph"><i></i></span> Stop recording</span>
+          </button>
+
+          <a id="download" class="gbtn is-neutral" style="display:none;">
+            <span class="aura"></span>
+            <span class="surface">Download recording</span>
+          </a>
+
+          <span class="rec"><b></b> <span id="recLabel">Idle</span></span>
+        </div>
+
+        <div class="panel preview-wrap">
+          <video id="preview" controls></video>
+          <div class="empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="2.5" y="5" width="19" height="14" rx="3"/>
+              <path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/>
+            </svg>
+            <span>Your recording preview will appear here</span>
+          </div>
+        </div>
+
+        <div class="panel console">
+          <div class="console-bar">
+            <span class="lights"><i></i><i></i><i></i></span>
+            sisyphus · console
+          </div>
+          <pre id="status">Ready.</pre>
+        </div>
+
+        <div class="panel backup">
+          <div class="backup-title">Backup</div>
+          <p class="note">Upload a saved WebM recording manually.</p>
+          <div class="file-row">
+            <label class="gbtn is-neutral file-pick">
+              <span class="aura"></span>
+              <span class="surface">Choose file</span>
+              <input id="manualFile" type="file" accept="video/webm,video/*">
+            </label>
+            <span class="file-name" id="fileName">No file selected</span>
+            <button id="manualUpload" class="gbtn is-neutral">
+              <span class="aura"></span>
+              <span class="surface">Upload saved recording</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
   <script>
+    /* ---- juicy jelly press on every glass button ---- */
+    document.querySelectorAll(".gbtn").forEach(btn => {
+      btn.addEventListener("pointerdown", () => {
+        if (btn.hasAttribute("disabled")) return;
+        btn.classList.remove("is-jelly");
+        void btn.offsetWidth;            /* restart animation */
+        btn.classList.add("is-jelly");
+      });
+      btn.addEventListener("animationend", e => {
+        if (e.animationName === "press") btn.classList.remove("is-jelly");
+      });
+    });
+
+    /* ---- recorder logic (unchanged) ---- */
     let recorder;
     let chunks = [];
 
@@ -69,22 +482,19 @@ Demo idea:
     const download = document.getElementById("download");
     const preview = document.getElementById("preview");
     const status = document.getElementById("status");
+    const recLabel = document.getElementById("recLabel");
+
+    function showVideo() { document.body.classList.add("has-video"); }
 
     startBtn.onclick = async () => {
       chunks = [];
       download.style.display = "none";
       preview.removeAttribute("src");
 
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true
-        });
-      } catch (err) {
-        status.textContent = "Could not start recording: " + err.message;
-        return;
-      }
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true
+      });
 
       recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
 
@@ -99,10 +509,13 @@ Demo idea:
         const url = URL.createObjectURL(blob);
 
         preview.src = url;
+        showVideo();
         download.href = url;
         download.download = "sisyphus-workflow.webm";
-        download.style.display = "inline-block";
-        download.textContent = "Download recording";
+        download.style.display = "inline-flex";
+
+        document.body.classList.remove("recording");
+        recLabel.textContent = "Processing";
 
         status.textContent = "Recording complete. Uploading to Sisyphus...";
 
@@ -115,13 +528,15 @@ Demo idea:
         })
         .then(res => res.json())
         .then(data => {
+          recLabel.textContent = "Idle";
           status.textContent =
             "Upload complete.\n" +
             "Run ID: " + data.run_id + "\n" +
-            "Frames extracted: " + data.frames.length + "\n" +
+            "Frames extracted: " + data.frames.length + "\n\n" +
             data.frames.join("\n");
         })
         .catch(err => {
+          recLabel.textContent = "Idle";
           status.textContent = "Upload failed: " + err;
         });
       };
@@ -130,6 +545,8 @@ Demo idea:
 
       startBtn.disabled = true;
       stopBtn.disabled = false;
+      document.body.classList.add("recording");
+      recLabel.textContent = "Recording";
       status.textContent = "Recording...";
     };
 
@@ -139,16 +556,31 @@ Demo idea:
       stopBtn.disabled = true;
     };
 
-    document.getElementById("manualUpload").onclick = () => {
-      const file = document.getElementById("manualFile").files[0];
+    /* ---- manual backup upload ---- */
+    const manualFile = document.getElementById("manualFile");
+    const manualUpload = document.getElementById("manualUpload");
+    const fileName = document.getElementById("fileName");
+
+    manualFile.onchange = () => {
+      const file = manualFile.files[0];
+      fileName.textContent = file ? file.name : "No file selected";
+    };
+
+    manualUpload.onclick = () => {
+      const file = manualFile.files[0];
       if (!file) {
-        status.textContent = "No file selected.";
+        status.textContent = "Select a saved WebM recording first.";
         return;
       }
 
       const url = URL.createObjectURL(file);
       preview.src = url;
-      status.textContent = "Uploading saved recording...";
+      showVideo();
+      download.href = url;
+      download.download = file.name;
+      download.style.display = "inline-flex";
+
+      status.textContent = "Uploading saved recording to Sisyphus...";
 
       const formData = new FormData();
       formData.append("video", file, file.name);
@@ -162,7 +594,7 @@ Demo idea:
         status.textContent =
           "Upload complete.\n" +
           "Run ID: " + data.run_id + "\n" +
-          "Frames extracted: " + data.frames.length + "\n" +
+          "Frames extracted: " + data.frames.length + "\n\n" +
           data.frames.join("\n");
       })
       .catch(err => {
