@@ -1,4 +1,5 @@
 import os
+import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 import subprocess
@@ -13,12 +14,29 @@ load_dotenv()
 ROOT = Path(__file__).parent
 UPLOADS = ROOT / "uploads"
 FRAMES = ROOT / "frames"
+WORKFLOWS = ROOT / "workflows"
 
 UPLOADS.mkdir(exist_ok=True)
 FRAMES.mkdir(exist_ok=True)
+WORKFLOWS.mkdir(exist_ok=True)
 
 SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
 SERVER_PORT = int(os.getenv("SERVER_PORT", "3000"))
+
+
+def start_workflow_analysis(run_id: str) -> None:
+    analyze_script = ROOT / "analyze_run.py"
+    env = os.environ.copy()
+    env.update({"PYTHONUNBUFFERED": "1"})
+
+    print(f"Starting workflow analysis for run {run_id}")
+    subprocess.Popen(
+        [sys.executable, str(analyze_script), run_id],
+        cwd=str(ROOT),
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT,
+    )
 
 
 def parse_multipart_form(headers: dict, body: bytes) -> dict:
@@ -118,6 +136,8 @@ class Handler(SimpleHTTPRequestHandler):
             "-vf", "fps=1/2",
             str(frame_dir / "frame_%03d.jpg")
         ], check=True)
+
+        start_workflow_analysis(run_id)
 
         frames = sorted(str(p.relative_to(ROOT)) for p in frame_dir.glob("*.jpg"))
 

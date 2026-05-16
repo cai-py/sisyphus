@@ -1,0 +1,25 @@
+{
+  "run_id": "6d278575",
+  "workflow_name": "Export spreadsheet data and email it",
+  "intent": "Automate sending a Google Sheet as an email attachment",
+  "trigger_command": "/email",
+  "inputs_needed": "recipient email, email subject, email body, file to attach",
+  "automation_steps": [
+    "Open the Google Sheet containing the data",
+    "Select and copy the relevant rows/columns",
+    "Open Gmail compose window, paste data or attach the exported file, and send"
+  ],
+  "best_execution_method": "browser",
+  "missing_info": "recipient email address, email subject, email body content",
+  "frames_analyzed": [
+    "frames/6d278575/frame_001.jpg",
+    "frames/6d278575/frame_002.jpg",
+    "frames/6d278575/frame_004.jpg",
+    "frames/6d278575/frame_006.jpg",
+    "frames/6d278575/frame_008.jpg",
+    "frames/6d278575/frame_009.jpg"
+  ],
+  "source_video": "uploads/6d278575.webm",
+  "raw_model_output": "Workflow name: Export spreadsheet data and email it\nIntent: Automate sending a Google Sheet as an email attachment\nTrigger command: /email\nInputs needed: recipient email, email subject, email body, file to attach\nAutomation step 1: Open the Google Sheet containing the data\nAutomation step 2: Select and copy the relevant rows/columns\nAutomation step 3: Open Gmail compose window, paste data or attach the exported file, and send\nBest execution method: browser\nMissing info: recipient email address, email subject, email body content",
+  "status": "draft"
+}

@@ -1,7 +1,7 @@
+import base64
 import json
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 from typing import List
@@ -27,57 +27,56 @@ def select_frames(frame_dir: Path) -> List[Path]:
     return [all_frames[i] for i in idxs]
 
 
-def call_analyze_frame(script_path: Path, run_id: str, frame_index: int, endpoint: str, model: str, out_json: Path):
-    cmd = [
-        sys.executable,
-        str(script_path),
-        "--run-id",
-        run_id,
-        "--frame-index",
-        str(frame_index),
-        "--endpoint",
-        endpoint,
-        "--model",
-        model,
-        "--output",
-        str(out_json),
+def build_frame_payload(frames: List[Path], model: str) -> dict:
+    content = [
+        {
+            "type": "text",
+            "text": (
+                "You are Sisyphus, an AI that turns screen recordings into reusable automation plans.\n"
+                "Do NOT just describe the screen. Ignore the Sisyphus recorder interface unless it is the only thing visible.\n"
+                "Focus on the actual app or website the user was operating during the recording. Infer what task the user wants to automate next time.\n\n"
+                "Use all the provided frames together to understand the complete workflow.\n"
+                "Return brief plain text using exactly this format:\n\n"
+                "Workflow name: ...\n"
+                "Intent: ...\n"
+                "Trigger command: /...\n"
+                "Inputs needed: ...\n"
+                "Automation step 1: ...\n"
+                "Automation step 2: ...\n"
+                "Automation step 3: ...\n"
+                "Best execution method: browser | api | openclaw | manual_review\n"
+                "Missing info: ...\n\n"
+                "Keep each line short."
+            ),
+        }
     ]
-    env = os.environ.copy()
-    subprocess.run(cmd, check=True, env=env)
 
-
-def aggregate_and_generate(run_id: str, per_frame_texts: List[str], endpoint: str, model: str) -> str:
-    # Build an aggregation prompt similar to previous behavior
-    header = (
-        "You are Sisyphus, an AI that turns screen recordings into reusable automation plans.\n"
-        "Do NOT just describe the screen. Ignore the Sisyphus recorder interface unless it is the only thing visible.\n"
-        "Focus on the actual app or website the user was operating during the recording. Infer what task the user wants to automate next time.\n\n"
-        "Return brief plain text using exactly this format:\n\n"
-        "Workflow name: ...\n"
-        "Intent: ...\n"
-        "Trigger command: /...\n"
-        "Inputs needed: ...\n"
-        "Automation step 1: ...\n"
-        "Automation step 2: ...\n"
-        "Automation step 3: ...\n"
-        "Best execution method: browser | api | openclaw | manual_review\n"
-        "Missing info: ...\n\n"
-        "Keep each line short.\n\n"
-    )
-
-    content_texts = [header] + [f"Frame analysis {i+1}:\n{t}" for i, t in enumerate(per_frame_texts)]
+    for idx, frame in enumerate(frames, start=1):
+        frame_b64 = base64.b64encode(frame.read_bytes()).decode("utf-8")
+        content.append({
+            "type": "text",
+            "text": f"Frame {idx}:"
+        })
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{frame_b64}"}
+        })
 
     payload = {
         "model": model,
-        "messages": [{"role": "user", "content": content_texts}],
-        "max_tokens": 700,
+        "messages": [{"role": "user", "content": content}],
+        "max_tokens": 900,
     }
+    return payload
+
+
+def aggregate_and_generate(frames: List[Path], endpoint: str, model: str) -> str:
+    payload = build_frame_payload(frames, model)
 
     res = requests.post(endpoint, json=payload, timeout=180)
     res.raise_for_status()
     data = res.json()
 
-    # Best-effort extraction of the assistant text
     try:
         return data["choices"][0]["message"]["content"].strip()
     except Exception:
@@ -101,46 +100,15 @@ def main():
 
     frames = select_frames(frame_dir)
 
-    script_path = Path(__file__).with_name("analyze_frame.py")
-    out_dir = Path("workflows")
-    out_dir.mkdir(exist_ok=True)
+    workflow_dir = Path("workflows")
+    workflow_dir.mkdir(exist_ok=True)
 
     # Load from environment or use defaults
     endpoint = os.getenv("LLM_ENDPOINT", "http://127.0.0.1:8000/v1/chat/completions")
     model = os.getenv("LLM_MODEL", "nvidia/NVIDIA-Nemotron-3-Nano-Omni-30B-A3B-Reasoning-GGUF")
 
-    per_frame_texts = []
-    per_frame_outputs = []
-
-    for frame in frames:
-        idx = int(frame.stem.split("_")[-1])
-        out_json = out_dir / f"{run_id}_frame_{idx:03d}.json"
-        print(f"Analyzing frame {frame.name} -> {out_json}")
-        call_analyze_frame(script_path, run_id, idx, endpoint, model, out_json)
-
-        if out_json.exists():
-            try:
-                data = json.loads(out_json.read_text())
-                # Try to extract assistant text
-                text = ""
-                if isinstance(data, dict):
-                    text = (
-                        data.get("choices", [{}])[0].get("message", {}).get("content")
-                        or data.get("output")
-                        or json.dumps(data)
-                    )
-                else:
-                    text = json.dumps(data)
-            except Exception:
-                text = out_json.read_text()[:2000]
-        else:
-            text = ""
-
-        per_frame_texts.append(text)
-        per_frame_outputs.append({"frame": str(frame), "analysis": text})
-
-    # Aggregate into final workflow spec
-    final_analysis = aggregate_and_generate(run_id, per_frame_texts, endpoint, model)
+    print(f"Analyzing {len(frames)} selected frames for run {run_id}")
+    final_analysis = aggregate_and_generate(frames, endpoint, model)
 
     steps = []
     for i in range(1, 6):
@@ -158,13 +126,12 @@ def main():
         "best_execution_method": grab(final_analysis, "Best execution method", "manual_review"),
         "missing_info": grab(final_analysis, "Missing info"),
         "frames_analyzed": [str(f) for f in frames],
-        "per_frame_outputs": per_frame_outputs,
         "source_video": f"uploads/{run_id}.webm",
         "raw_model_output": final_analysis,
         "status": "draft",
     }
 
-    out_path = out_dir / f"{run_id}.json"
+    out_path = workflow_dir / f"{run_id}.json"
     out_path.write_text(json.dumps(workflow, indent=2))
 
     print(final_analysis)
