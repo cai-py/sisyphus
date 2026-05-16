@@ -15,23 +15,29 @@ ROOT = Path(__file__).parent
 UPLOADS = ROOT / "uploads"
 FRAMES = ROOT / "frames"
 WORKFLOWS = ROOT / "workflows"
+TRANSCRIPTS = ROOT / "transcripts"
 
 UPLOADS.mkdir(exist_ok=True)
 FRAMES.mkdir(exist_ok=True)
 WORKFLOWS.mkdir(exist_ok=True)
+TRANSCRIPTS.mkdir(exist_ok=True)
 
 SERVER_HOST = os.getenv("SERVER_HOST", "127.0.0.1")
 SERVER_PORT = int(os.getenv("SERVER_PORT", "3000"))
 
 
-def start_workflow_analysis(run_id: str) -> None:
+def start_workflow_analysis(run_id: str, transcript: str = "") -> None:
     analyze_script = ROOT / "analyze_run.py"
     env = os.environ.copy()
     env.update({"PYTHONUNBUFFERED": "1"})
 
     print(f"Starting workflow analysis for run {run_id}")
+    cmd = [sys.executable, str(analyze_script), run_id]
+    if transcript:
+        cmd.extend(["--transcript", transcript])
+
     subprocess.Popen(
-        [sys.executable, str(analyze_script), run_id],
+        cmd,
         cwd=str(ROOT),
         env=env,
         stdout=subprocess.DEVNULL,
@@ -103,6 +109,32 @@ def parse_multipart_form(headers: dict, body: bytes) -> dict:
 
 class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
+        if self.path == "/save-dictation":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except Exception as e:
+                self.send_error(400, f"Invalid JSON payload: {e}")
+                return
+
+            transcript_text = payload.get("transcript", "").strip()
+            filename = payload.get("filename", "transcript.txt")
+            filename = Path(filename).name
+            if not transcript_text:
+                self.send_error(400, "No transcript text provided")
+                return
+
+            unique_name = f"{uuid.uuid4().hex[:8]}_{filename}"
+            transcript_path = TRANSCRIPTS / unique_name
+            transcript_path.write_text(transcript_text, encoding="utf-8")
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"path": str(transcript_path.relative_to(ROOT))}).encode())
+            return
+
         if self.path != "/upload":
             self.send_error(404)
             return
@@ -129,6 +161,11 @@ class Handler(SimpleHTTPRequestHandler):
         with open(video_path, "wb") as f:
             f.write(video_data)
 
+        transcript = form_data.get("transcript", "")
+        if transcript:
+            transcript_path = TRANSCRIPTS / f"{run_id}.txt"
+            transcript_path.write_text(transcript)
+
         subprocess.run([
             "ffmpeg",
             "-y",
@@ -137,7 +174,7 @@ class Handler(SimpleHTTPRequestHandler):
             str(frame_dir / "frame_%03d.jpg")
         ], check=True)
 
-        start_workflow_analysis(run_id)
+        start_workflow_analysis(run_id, transcript)
 
         frames = sorted(str(p.relative_to(ROOT)) for p in frame_dir.glob("*.jpg"))
 

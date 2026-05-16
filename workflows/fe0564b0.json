@@ -1,0 +1,25 @@
+{
+  "run_id": "fe0564b0",
+  "workflow_name": "NVIDIA password reset automation",
+  "intent": "Fill NVIDIA password reset form using data from a spreadsheet",
+  "trigger_command": "/nvidia-reset-automation",
+  "inputs_needed": "target spreadsheet row (email/username), NVIDIA account details",
+  "automation_steps": [
+    "Open the spreadsheet and locate the required row",
+    "Copy the email/username from the selected cell",
+    "Open NVIDIA password reset page, paste the copied info, and submit"
+  ],
+  "best_execution_method": "browser",
+  "missing_info": "specific email/username to use, which spreadsheet row to select",
+  "frames_analyzed": [
+    "frames/fe0564b0/frame_001.jpg",
+    "frames/fe0564b0/frame_008.jpg",
+    "frames/fe0564b0/frame_015.jpg",
+    "frames/fe0564b0/frame_022.jpg",
+    "frames/fe0564b0/frame_029.jpg",
+    "frames/fe0564b0/frame_036.jpg"
+  ],
+  "source_video": "uploads/fe0564b0.webm",
+  "raw_model_output": "Workflow name: NVIDIA password reset automation  \nIntent: Fill NVIDIA password reset form using data from a spreadsheet  \nTrigger command: /nvidia-reset-automation  \nInputs needed: target spreadsheet row (email/username), NVIDIA account details  \nAutomation step 1: Open the spreadsheet and locate the required row  \nAutomation step 2: Copy the email/username from the selected cell  \nAutomation step 3: Open NVIDIA password reset page, paste the copied info, and submit  \nBest execution method: browser  \nMissing info: specific email/username to use, which spreadsheet row to select",
+  "status": "draft"
+}

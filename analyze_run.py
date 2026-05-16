@@ -5,6 +5,7 @@ import re
 import sys
 from pathlib import Path
 from typing import List
+import argparse
 
 from dotenv import load_dotenv
 import requests
@@ -27,7 +28,7 @@ def select_frames(frame_dir: Path) -> List[Path]:
     return [all_frames[i] for i in idxs]
 
 
-def build_frame_payload(frames: List[Path], model: str) -> dict:
+def build_frame_payload(frames: List[Path], model: str, transcript: str = "") -> dict:
     content = [
         {
             "type": "text",
@@ -51,6 +52,16 @@ def build_frame_payload(frames: List[Path], model: str) -> dict:
         }
     ]
 
+    if transcript:
+        content.append({
+            "type": "text",
+            "text": (
+                "User transcript context:\n"
+                f"{transcript}\n\n"
+                "Use this spoken context to avoid hallucination and to better infer the user intent."
+            )
+        })
+
     for idx, frame in enumerate(frames, start=1):
         frame_b64 = base64.b64encode(frame.read_bytes()).decode("utf-8")
         content.append({
@@ -70,8 +81,8 @@ def build_frame_payload(frames: List[Path], model: str) -> dict:
     return payload
 
 
-def aggregate_and_generate(frames: List[Path], endpoint: str, model: str) -> str:
-    payload = build_frame_payload(frames, model)
+def aggregate_and_generate(frames: List[Path], endpoint: str, model: str, transcript: str = "") -> str:
+    payload = build_frame_payload(frames, model, transcript)
 
     res = requests.post(endpoint, json=payload, timeout=180)
     res.raise_for_status()
@@ -100,6 +111,13 @@ def main():
 
     frames = select_frames(frame_dir)
 
+    parser = argparse.ArgumentParser(description="Generate a workflow spec from extracted frames and optional transcript context")
+    parser.add_argument("run_id", help="Run ID / frames subdirectory")
+    parser.add_argument("--transcript", default="", help="Optional transcript text from the recording session")
+    args = parser.parse_args()
+
+    transcript = args.transcript
+
     workflow_dir = Path("workflows")
     workflow_dir.mkdir(exist_ok=True)
 
@@ -108,7 +126,9 @@ def main():
     model = os.getenv("LLM_MODEL", "nvidia/NVIDIA-Nemotron-3-Nano-Omni-30B-A3B-Reasoning-GGUF")
 
     print(f"Analyzing {len(frames)} selected frames for run {run_id}")
-    final_analysis = aggregate_and_generate(frames, endpoint, model)
+    if transcript:
+        print("Using transcript context from microphone input.")
+    final_analysis = aggregate_and_generate(frames, endpoint, model, transcript)
 
     steps = []
     for i in range(1, 6):

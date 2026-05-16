@@ -521,7 +521,7 @@ updateSeekUI(0);
 /* ----- recorder logic (unchanged behaviour) ----- */
 let recorder,chunks=[];
 const startBtn=document.getElementById("start"),stopBtn=document.getElementById("stop"),
-  download=document.getElementById("download");
+  download=document.getElementById("download"),dictateInput=document.getElementById("dictateInput");
 
 window.addEventListener("load",()=>{
   document.querySelectorAll(".gbtn").forEach(b=>{
@@ -552,6 +552,7 @@ startBtn.onclick=async()=>{
     document.body.classList.remove("recording");recLabel.textContent="Processing";
     status.textContent="Recording complete. Uploading to Sisyphus...";
     const fd=new FormData();fd.append("video",blob,"sisyphus-workflow.webm");
+    fd.append("transcript",dictateInput.value.trim());
     fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
       recLabel.textContent="Idle";
       status.textContent="Upload complete.\n"+"Run ID: "+d.run_id+"\n"+
@@ -574,6 +575,7 @@ manualUpload.onclick=()=>{
   loadIntoPlayer(URL.createObjectURL(f),f.name);
   status.textContent="Uploading saved recording to Sisyphus...";
   const fd=new FormData();fd.append("video",f,f.name);
+  fd.append("transcript",dictateInput.value.trim());
   fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
     status.textContent="Upload complete.\n"+"Run ID: "+d.run_id+"\n"+
       "Frames extracted: "+d.frames.length+"\n\n"+d.frames.join("\n");
@@ -619,12 +621,12 @@ manualUpload.onclick=()=>{
   // download whatever is currently in the bar as transcript.txt
   // (also POSTs to /save-dictation if a server route exists)
   function saveTranscript(){
-    const text=input.value.trim();
+    const text = input.value.trim();
     if(!text){setHint("Nothing to save yet","err");return}
     fetch("/save-dictation",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text:text,filename:"transcript.txt"})
+      body:JSON.stringify({transcript:text,filename:"dictation.txt"})
     }).then(r=>{
       if(!r.ok)throw new Error("HTTP "+r.status);
       return r.json().catch(()=>({}));
@@ -635,7 +637,7 @@ manualUpload.onclick=()=>{
       // no server route — download the file directly
       const blob=new Blob([text+"\n"],{type:"text/plain"});
       const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);a.download="transcript.txt";
+      a.href=URL.createObjectURL(blob);a.download="dictation.txt";
       document.body.appendChild(a);a.click();a.remove();
       setHint("Got it!    :)","ok");
     });
