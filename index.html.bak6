@@ -141,9 +141,18 @@ body.recording .rec b{box-shadow:0 0 12px var(--rec);animation:pulse 1.15s ease-
 
 .dictate-bar .lg-content{display:flex!important;align-items:center;width:100%;
   gap:8px;padding:7px 9px 7px 9px}
-.x-btn{flex:none;border:none;background:none;cursor:pointer;color:var(--text);
+.mic-btn,.x-btn{flex:none;border:none;background:none;cursor:pointer;color:var(--text);
   display:inline-grid;place-items:center;border-radius:50%;
   transition:transform .3s var(--spring),background .25s var(--ease),color .25s var(--ease)}
+.mic-btn{width:38px;height:38px}
+.mic-btn svg{width:19px;height:19px;fill:currentColor;
+  transition:filter .25s var(--ease)}
+.mic-btn:hover{transform:scale(1.07);background:rgba(255,255,255,.08)}
+.mic-btn:active{transform:scale(1.14)}
+.dictate.is-listening .mic-btn{color:#ff5d6e}
+.dictate.is-listening .mic-btn svg{filter:drop-shadow(0 0 7px rgba(255,93,110,.9));
+  animation:mic-pulse 1.15s ease-in-out infinite}
+@keyframes mic-pulse{0%,100%{transform:scale(1)}50%{transform:scale(.82)}}
 .dictate-input{flex:1;min-width:0;border:none;outline:none;background:none;
   font:600 15px/1.2 "Manrope",system-ui,sans-serif;letter-spacing:-.01em;
   color:var(--text);padding:8px 2px}
@@ -152,64 +161,18 @@ body.recording .rec b{box-shadow:0 0 12px var(--rec);animation:pulse 1.15s ease-
   transform:scale(.7);pointer-events:none}
 .dictate-bar.has-text .x-btn{opacity:1;transform:scale(1);pointer-events:auto}
 .x-btn:hover{color:var(--text);background:rgba(255,255,255,.08)}
-.expand-btn{flex:none;border:none;cursor:pointer;width:36px;height:36px;
+.send-btn{flex:none;border:none;cursor:pointer;width:36px;height:36px;
   display:inline-grid;place-items:center;border-radius:50%;color:var(--text-dim);
   background:rgba(255,255,255,.06);
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
   transition:transform .3s var(--spring),color .25s var(--ease),
     background .25s var(--ease),box-shadow .25s var(--ease)}
-.expand-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;
-  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.expand-btn:hover{color:var(--text);transform:scale(1.08);
+.send-btn svg{width:17px;height:17px;fill:currentColor}
+.send-btn:hover{color:var(--text);transform:scale(1.08);
   background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
-.expand-btn:active{transform:scale(1.15)}
-.dictate-bar.has-text .expand-btn{color:#5cf0c8;
+.send-btn:active{transform:scale(1.15)}
+.dictate-bar.has-text .send-btn{color:#5cf0c8;
   box-shadow:inset 0 0 0 1px rgba(92,240,200,.4),0 0 14px -5px rgba(92,240,200,.7)}
-
-/* ===== fullscreen transcription (iOS folder-style expand) ===== */
-.dictate-fs{position:fixed;inset:0;z-index:120;display:flex;
-  align-items:center;justify-content:center;padding:24px;
-  opacity:0;pointer-events:none;
-  background:rgba(5,5,7,.55);
-  backdrop-filter:blur(26px) saturate(150%);
-  -webkit-backdrop-filter:blur(26px) saturate(150%);
-  transition:opacity .4s var(--ease)}
-.dictate-fs.open{opacity:1;pointer-events:auto}
-.dictate-fs-card{position:relative;width:min(860px,100%);
-  height:min(80vh,720px);display:flex;flex-direction:column;
-  border-radius:var(--r-xl);overflow:hidden;
-  background:rgba(18,18,24,.62);
-  border:1px solid rgba(255,255,255,.13);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),
-    0 50px 120px -30px rgba(0,0,0,.85);
-  transform-origin:top left;will-change:transform,opacity;
-  transition:transform .52s var(--spring),opacity .32s var(--ease)}
-.dictate-fs-head{display:flex;align-items:center;gap:12px;
-  padding:20px 22px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
-.dictate-fs-title{font-family:"Bricolage Grotesque",sans-serif;
-  font-weight:800;font-size:20px;letter-spacing:-.02em;
-  background:linear-gradient(180deg,#fff,rgba(255,255,255,.6));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.dictate-fs-state{font-family:"JetBrains Mono",monospace;font-size:11.5px;
-  letter-spacing:.04em;color:var(--text-faint);margin-left:2px}
-.dictate.is-listening~.dictate-fs .dictate-fs-state,
-.dictate-fs.listening .dictate-fs-state{color:#ff5d6e}
-.dictate-fs-close{flex:none;margin-left:auto;width:38px;height:38px;
-  border:none;cursor:pointer;border-radius:50%;font-size:22px;line-height:1;
-  color:var(--text-dim);background:rgba(255,255,255,.06);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
-  display:inline-grid;place-items:center;
-  transition:transform .3s var(--spring),background .25s var(--ease),color .25s var(--ease)}
-.dictate-fs-close:hover{color:var(--text);transform:scale(1.07);
-  background:rgba(255,255,255,.13)}
-.dictate-fs-close:active{transform:scale(1.14)}
-.dictate-fs-text{flex:1;border:none;outline:none;resize:none;
-  background:none;color:var(--text);padding:24px 26px;
-  font:500 18px/1.65 "Manrope",system-ui,sans-serif;letter-spacing:-.01em;
-  overflow:auto}
-.dictate-fs-text::placeholder{color:var(--text-faint)}
-@media (prefers-reduced-motion:reduce){
-  .dictate-fs-card{transition:opacity .2s linear!important}}
 .dictate-hint{margin:7px 4px 0;font-size:12px;color:var(--text-faint);
   font-family:"JetBrains Mono",ui-monospace,monospace;letter-spacing:.01em;
   min-height:15px;transition:color .3s}
@@ -252,7 +215,7 @@ body:not(.has-video) .pbar{display:none}
 
 /* seekbar: GIF-style glass scrubber */
 .seek{
-  --seek-track-y:31px;
+  --seek-track-y:38px;
   --seek-track-h:5px;
   position:relative;flex:1;height:62px;display:flex;align-items:flex-start;
   cursor:pointer;touch-action:none;overflow:visible;min-width:130px;
@@ -367,12 +330,18 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
     <div class="dictate" id="dictateWrap">
      <div class="dictate-bar" id="dictateBar"
        data-liquid-glass='{"radius":999,"bezel":20,"scale":52,"dispersion":0.16,"frost":3,"tint":"rgba(255,255,255,0.05)","specularOpacity":0.6}'>
-      <input id="dictateInput" class="dictate-input" type="text" autocomplete="off"
-        spellcheck="false" placeholder="Use the recording button to dictate, or just type...">
-      <button class="x-btn" id="dictateClear" type="button" aria-label="Clear text">&times;</button>
-      <button class="expand-btn" id="dictateExpand" type="button" aria-label="Expand transcription to fullscreen">
+      <button class="mic-btn" id="micBtn" type="button" aria-label="Dictate by voice">
        <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/>
+        <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"/>
+        <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.92V21a1 1 0 0 0 2 0v-3.08A7 7 0 0 0 19 11z"/>
+       </svg>
+      </button>
+      <input id="dictateInput" class="dictate-input" type="text" autocomplete="off"
+        spellcheck="false" placeholder="Tap the mic to speak or just type...">
+      <button class="x-btn" id="dictateClear" type="button" aria-label="Clear text">&times;</button>
+      <button class="send-btn" id="dictateSend" type="button" aria-label="Download transcript.txt">
+       <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3.4 20.4l17.5-8.4a.7.7 0 0 0 0-1.3L3.4 2.3a.7.7 0 0 0-1 .8L4.6 11 14 12l-9.4 1-2.2 7.6a.7.7 0 0 0 1 .8z"/>
        </svg>
       </button>
      </div>
@@ -459,18 +428,6 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
    </div>
   </div>
  </main>
-</div>
-
-<div class="dictate-fs" id="dictateFs" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Transcription">
- <div class="dictate-fs-card" id="dictateFsCard">
-  <div class="dictate-fs-head">
-   <span class="dictate-fs-title">Transcription</span>
-   <span class="dictate-fs-state" id="dictateFsState"></span>
-   <button class="dictate-fs-close" id="dictateFsClose" type="button" aria-label="Close fullscreen">&times;</button>
-  </div>
-  <textarea class="dictate-fs-text" id="dictateFsText" spellcheck="false"
-    placeholder="Your transcription will appear here..."></textarea>
- </div>
 </div>
 
 <script src="liquid-glass.js"></script>
@@ -564,7 +521,7 @@ updateSeekUI(0);
 /* ----- recorder logic (unchanged behaviour) ----- */
 let recorder,chunks=[];
 const startBtn=document.getElementById("start"),stopBtn=document.getElementById("stop"),
-  download=document.getElementById("download");
+  download=document.getElementById("download"),dictateInput=document.getElementById("dictateInput");
 
 window.addEventListener("load",()=>{
   document.querySelectorAll(".gbtn").forEach(b=>{
@@ -595,6 +552,7 @@ startBtn.onclick=async()=>{
     document.body.classList.remove("recording");recLabel.textContent="Processing";
     status.textContent="Recording complete. Uploading to Sisyphus...";
     const fd=new FormData();fd.append("video",blob,"sisyphus-workflow.webm");
+    fd.append("transcript",dictateInput.value.trim());
     fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
       recLabel.textContent="Idle";
       status.textContent="Upload complete.\n"+"Run ID: "+d.run_id+"\n"+
@@ -602,16 +560,11 @@ startBtn.onclick=async()=>{
     }).catch(err=>{recLabel.textContent="Idle";status.textContent="Upload failed: "+err});
   };
   recorder.start();
-  if(window.Dictation)window.Dictation.start();
   startBtn.disabled=true;stopBtn.disabled=false;
   document.body.classList.add("recording");recLabel.textContent="Recording";
   status.textContent="Recording...";
 };
-stopBtn.onclick=()=>{
-  recorder.stop();
-  if(window.Dictation)window.Dictation.stop();
-  startBtn.disabled=false;stopBtn.disabled=true;
-};
+stopBtn.onclick=()=>{recorder.stop();startBtn.disabled=false;stopBtn.disabled=true};
 
 const manualFile=document.getElementById("manualFile"),
   manualUpload=document.getElementById("manualUpload"),fileName=document.getElementById("fileName");
@@ -622,25 +575,22 @@ manualUpload.onclick=()=>{
   loadIntoPlayer(URL.createObjectURL(f),f.name);
   status.textContent="Uploading saved recording to Sisyphus...";
   const fd=new FormData();fd.append("video",f,f.name);
+  fd.append("transcript",dictateInput.value.trim());
   fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
     status.textContent="Upload complete.\n"+"Run ID: "+d.run_id+"\n"+
       "Frames extracted: "+d.frames.length+"\n\n"+d.frames.join("\n");
   }).catch(err=>{status.textContent="Upload failed: "+err});
 };
 
-/* ----- voice dictation (driven by the screen-recording button) ----- */
+/* ----- voice dictation search bar ----- */
 (function(){
   const wrap=document.getElementById("dictateWrap"),
     bar=document.getElementById("dictateBar"),
+    micBtn=document.getElementById("micBtn"),
     input=document.getElementById("dictateInput"),
     clearBtn=document.getElementById("dictateClear"),
-    expandBtn=document.getElementById("dictateExpand"),
-    hint=document.getElementById("dictateHint"),
-    fs=document.getElementById("dictateFs"),
-    fsCard=document.getElementById("dictateFsCard"),
-    fsText=document.getElementById("dictateFsText"),
-    fsState=document.getElementById("dictateFsState"),
-    fsClose=document.getElementById("dictateFsClose");
+    sendBtn=document.getElementById("dictateSend"),
+    hint=document.getElementById("dictateHint");
 
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   let rec=null,listening=false,committed="";
@@ -650,27 +600,15 @@ manualUpload.onclick=()=>{
     hint.classList.remove("ok","err");
     if(cls)hint.classList.add(cls);
   }
-  function scrollEnds(){
-    // keep the newest (rightmost) text in view as dictation grows
-    requestAnimationFrame(()=>{
-      if(document.activeElement!==input)
-        input.scrollLeft=input.scrollWidth;
-      if(document.activeElement!==fsText)
-        fsText.scrollTop=fsText.scrollHeight;
-    });
-  }
   function refreshText(){
     bar.classList.toggle("has-text",input.value.trim().length>0);
-    if(fs.classList.contains("open")&&document.activeElement!==fsText)
-      fsText.value=input.value;
-    scrollEnds();
   }
   function activate(){wrap.classList.add("is-active")}
   function deactivate(){if(!listening)wrap.classList.remove("is-active")}
 
   // click anywhere on the pill (except buttons) focuses the field
   bar.addEventListener("pointerdown",e=>{
-    if(e.target.closest(".x-btn,.expand-btn"))return;
+    if(e.target.closest(".mic-btn,.x-btn,.send-btn"))return;
     activate();setTimeout(()=>input.focus(),0);
   });
   input.addEventListener("focus",activate);
@@ -680,15 +618,15 @@ manualUpload.onclick=()=>{
     input.value="";committed="";refreshText();input.focus();
   });
 
-  // download whatever has been dictated/typed as transcript.txt
+  // download whatever is currently in the bar as transcript.txt
   // (also POSTs to /save-dictation if a server route exists)
   function saveTranscript(){
-    const text=input.value.trim();
+    const text = input.value.trim();
     if(!text){setHint("Nothing to save yet","err");return}
     fetch("/save-dictation",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text:text,filename:"transcript.txt"})
+      body:JSON.stringify({transcript:text,filename:"dictation.txt"})
     }).then(r=>{
       if(!r.ok)throw new Error("HTTP "+r.status);
       return r.json().catch(()=>({}));
@@ -699,85 +637,21 @@ manualUpload.onclick=()=>{
       // no server route — download the file directly
       const blob=new Blob([text+"\n"],{type:"text/plain"});
       const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);a.download="transcript.txt";
+      a.href=URL.createObjectURL(blob);a.download="dictation.txt";
       document.body.appendChild(a);a.click();a.remove();
       setHint("Got it!    :)","ok");
     });
   }
 
-  // Enter in either field still saves transcript.txt
+  // Enter in the field, or the send button → download transcript.txt
   input.addEventListener("keydown",e=>{
     if(e.key==="Enter"){e.preventDefault();saveTranscript()}
   });
-
-  /* ---- fullscreen transcription (iOS folder-style expand) ---- */
-  function syncFromFs(){
-    input.value=fsText.value;refreshText();
-  }
-  fsText.addEventListener("input",syncFromFs);
-  fsText.addEventListener("keydown",e=>{
-    if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){e.preventDefault();saveTranscript()}
-    if(e.key==="Escape")closeFs();
-  });
-
-  function openFs(){
-    fsText.value=input.value;
-    fsState.textContent=listening?"● recording":"";
-    fs.setAttribute("aria-hidden","false");
-    // measure the bar, then grow the card out of it (FLIP)
-    const b=bar.getBoundingClientRect();
-    fs.style.pointerEvents="auto";
-    fs.classList.add("open");
-    const c=fsCard.getBoundingClientRect();
-    const sx=b.width/c.width, sy=b.height/c.height;
-    const tx=b.left-c.left, ty=b.top-c.top;
-    fsCard.style.transition="none";
-    fsCard.style.opacity="0";
-    fsCard.style.transform=
-      "translate("+tx+"px,"+ty+"px) scale("+sx+","+sy+")";
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        fsCard.style.transition="";
-        fsCard.style.opacity="1";
-        fsCard.style.transform="none";
-      });
-    });
-  }
-  function closeFs(){
-    const b=bar.getBoundingClientRect();
-    const c=fsCard.getBoundingClientRect();
-    const sx=b.width/c.width, sy=b.height/c.height;
-    const tx=b.left-c.left, ty=b.top-c.top;
-    fs.classList.remove("open");
-    fsCard.style.opacity="0";
-    fsCard.style.transform=
-      "translate("+tx+"px,"+ty+"px) scale("+sx+","+sy+")";
-    fs.style.pointerEvents="none";
-    const done=()=>{
-      fsCard.removeEventListener("transitionend",done);
-      fs.setAttribute("aria-hidden","true");
-      fsCard.style.transition="none";
-      fsCard.style.transform="none";
-      fsCard.style.opacity="";
-      requestAnimationFrame(()=>fsCard.style.transition="");
-    };
-    fsCard.addEventListener("transitionend",done);
-    setTimeout(done,600);
-  }
-  expandBtn.addEventListener("click",()=>{
-    fs.classList.contains("open")?closeFs():openFs();
-  });
-  fsClose.addEventListener("click",closeFs);
-  fs.addEventListener("pointerdown",e=>{if(e.target===fs)closeFs()});
+  sendBtn.addEventListener("click",saveTranscript);
 
   function startRec(){
-    if(listening)return;
-    // rainbow ring lights up the instant recording starts
-    listening=true;
-    wrap.classList.add("is-active","is-listening");
-    fsState.textContent="● recording";
     if(!SR){
-      setHint("Recording — no on-device speech recognition here (type instead, or use Chrome/Edge)","err");
+      setHint("This browser has no on-device speech recognition. Try Chrome/Edge.","err");
       return;
     }
     rec=new SR();
@@ -789,8 +663,7 @@ manualUpload.onclick=()=>{
     rec.onstart=()=>{
       listening=true;
       wrap.classList.add("is-active","is-listening");
-      fsState.textContent="● recording";
-      setHint("Listening… stop the recording to save transcript.txt");
+      setHint("Listening… press the mic again to stop & save");
     };
     rec.onresult=(e)=>{
       let interim="";
@@ -807,7 +680,7 @@ manualUpload.onclick=()=>{
       if(e.error==="not-allowed"||e.error==="service-not-allowed")
         setHint("Microphone permission denied","err");
       else if(e.error==="no-speech")
-        setHint("No speech detected yet…");
+        setHint("No speech detected — tap the mic and try again","err");
       else setHint("Dictation error: "+e.error,"err");
     };
     rec.onend=()=>{
@@ -822,12 +695,11 @@ manualUpload.onclick=()=>{
   function stopRec(fromEnd){
     const wasListening=listening;
     listening=false;
-    // rainbow ring fully disappears the moment recording stops
-    wrap.classList.remove("is-listening","is-active");
-    fsState.textContent="";
+    wrap.classList.remove("is-listening");
+    if(!input.matches(":focus"))wrap.classList.remove("is-active");
     if(rec&&!fromEnd){try{rec.stop()}catch(_){}}
     rec=null;
-    // stopping the recording also stops dictation AND saves
+    // pressing the mic a second time stops AND saves
     if(wasListening&&input.value.trim()){
       saveTranscript();
     }else if(!hint.classList.contains("err")){
@@ -835,14 +707,11 @@ manualUpload.onclick=()=>{
     }
   }
 
-  // exposed so the Start / Stop Screen Recording button drives dictation
-  window.Dictation={
-    start:startRec,
-    stop:()=>stopRec(false),
-    isListening:()=>listening
-  };
+  micBtn.addEventListener("click",()=>{
+    listening?stopRec(false):startRec();
+  });
 
-  if(!SR)setHint("Dictation needs Chrome or Edge — you can still type here","err");
+  if(!SR)setHint("On-device dictation needs Chrome or Edge on this device","err");
 })();
 </script>
 </body>
