@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sisyphus Screen Recorder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050507;--text:#f4f4f8;--text-dim:rgba(244,244,248,.62);--text-faint:rgba(244,244,248,.38);
+  --stroke:rgba(255,255,255,.13);--rec:#ff4d5e;
+  --r-xl:34px;--r-lg:24px;--r-pill:999px;
+  --ease:cubic-bezier(.2,.9,.2,1);--spring:cubic-bezier(.34,1.3,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font-family:"Manrope",system-ui,sans-serif;color:var(--text);background:var(--bg);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* gradient-mesh backdrop */
+.mesh{position:fixed;inset:-20%;z-index:-3;filter:blur(90px) saturate(135%)}
+.mesh span{position:absolute;border-radius:50%;mix-blend-mode:screen}
+.mesh .warm{width:70vw;height:70vw;left:26%;bottom:-22%;
+  background:radial-gradient(circle at 50% 50%,#ff7a36 0%,#ff5a2a 32%,rgba(180,40,20,0) 68%);
+  animation:f1 30s var(--ease) infinite alternate}
+.mesh .warm-s{width:38vw;height:38vw;left:40%;bottom:4%;
+  background:radial-gradient(circle at 50% 50%,#ffae5e 0%,rgba(255,120,40,0) 66%);
+  animation:f2 24s var(--ease) infinite alternate}
+.mesh .cool{width:62vw;height:62vw;right:-16%;top:-20%;
+  background:radial-gradient(circle at 50% 50%,#2f74ff 0%,#1f4fd0 38%,rgba(20,30,90,0) 70%);
+  animation:f2 34s var(--ease) infinite alternate}
+.mesh .cool-s{width:34vw;height:34vw;right:4%;top:8%;
+  background:radial-gradient(circle at 50% 50%,#45d2ff 0%,rgba(40,140,220,0) 66%);
+  animation:f1 27s var(--ease) infinite alternate}
+.mesh .seam{width:40vw;height:40vw;right:14%;top:32%;
+  background:radial-gradient(circle at 50% 50%,rgba(255,90,140,.5) 0%,rgba(120,40,90,0) 70%);
+  animation:f1 31s var(--ease) infinite alternate}
+@keyframes f1{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-4vw,3vw,0) scale(1.14)}}
+@keyframes f2{from{transform:translate3d(0,0,0) scale(1.06)}to{transform:translate3d(3vw,-2vw,0) scale(.94)}}
+.vig{position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:radial-gradient(130% 100% at 50% 60%,transparent 38%,rgba(5,5,7,.55) 72%,#050507 100%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.4;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+
+/* ===== Liquid Glass layer system (filled by liquid-glass.js) ===== */
+.lg{position:relative;isolation:isolate;-webkit-tap-highlight-color:transparent}
+.lg .lg-bg,.lg .lg-tint,.lg .lg-spec{position:absolute;inset:0;border-radius:inherit;pointer-events:none}
+.lg .lg-bg{z-index:0}
+.lg .lg-tint{z-index:1;box-shadow:inset 0 0 0 1px var(--stroke),
+  inset 0 1px 1px rgba(255,255,255,.30),0 6px 18px -10px rgba(0,0,0,.55)}
+.lg .lg-spec{z-index:2;mix-blend-mode:screen;
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  background:linear-gradient(135deg,#fff,rgba(255,255,255,.35) 45%,rgba(255,255,255,.75))}
+.lg .lg-content{position:relative;z-index:3;display:inline-flex;align-items:center;gap:10px}
+.lg.lg-fallback .lg-tint{background:rgba(255,255,255,.08)!important}
+
+.stage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 22px}
+.card{position:relative;width:100%;max-width:660px;border-radius:var(--r-xl);
+  animation:rise .9s var(--ease) both}
+.card .lg-tint{box-shadow:inset 0 0 0 1px var(--stroke),inset 0 1px 0 rgba(255,255,255,.4),
+  0 40px 100px -30px rgba(0,0,0,.8)}
+.card .lg-content{display:block}
+.pad{padding:40px}
+@keyframes rise{from{opacity:0;transform:translateY(26px) scale(.97);filter:blur(7px)}
+  to{opacity:1;transform:none;filter:none}}
+.stagger>*{animation:fu .85s var(--ease) both}
+.stagger>*:nth-child(1){animation-delay:.10s}.stagger>*:nth-child(2){animation-delay:.18s}
+.stagger>*:nth-child(3){animation-delay:.26s}.stagger>*:nth-child(4){animation-delay:.34s}
+.stagger>*:nth-child(5){animation-delay:.42s}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+header{margin-bottom:26px}
+.badge{display:inline-flex;border-radius:var(--r-pill);padding:8px 15px 8px 12px;
+  font-size:12.5px;font-weight:600;color:var(--text-dim)}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:#38d6ff;box-shadow:0 0 10px #38d6ff}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:clamp(36px,6.4vw,54px);letter-spacing:-.03em;line-height:1;margin:18px 0 12px;
+  background:linear-gradient(180deg,#fff,rgba(255,255,255,.58));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--text-dim);font-size:15.5px;max-width:46ch}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:30px 0 24px}
+.gbtn{border:none;background:none;cursor:pointer;font:inherit;color:var(--text);
+  text-decoration:none;display:inline-flex;border-radius:var(--r-pill);
+  transition:transform .45s var(--spring)}
+.gbtn .lg-content{padding:15px 26px;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.gbtn .lg-tint{transition:box-shadow .35s var(--ease),background .35s var(--ease)}
+.gbtn .lg-spec{transition:opacity .35s var(--ease)}
+.gbtn:hover:not([disabled]){transform:scale(1.04)}
+.gbtn:hover:not([disabled]) .lg-tint{
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),inset 0 1px 1px rgba(255,255,255,.45),
+  0 14px 30px -12px rgba(0,0,0,.6),0 0 30px -6px var(--glow,transparent)}
+.gbtn:hover:not([disabled]) .lg-spec{opacity:1!important}
+.gbtn.press{animation:press .42s var(--ease) both}
+@keyframes press{0%{transform:scale(1)}34%{transform:scale(.965)}62%{transform:scale(1.006)}100%{transform:scale(1)}}
+.gbtn:focus-visible{outline:none}
+.gbtn:focus-visible .lg-tint{box-shadow:0 0 0 3px color-mix(in srgb,var(--glow,#6cf) 60%,transparent),
+  inset 0 1px 1px rgba(255,255,255,.4)}
+.gbtn[disabled]{cursor:not-allowed;opacity:.36}
+.gbtn.is-start{--glow:#5cf0c8}.gbtn.is-stop{--glow:#ff5d6e}.gbtn.is-neutral{--glow:#5fb6ff}
+.glyph{width:15px;height:15px;display:inline-grid;place-items:center}
+.glyph i{width:10px;height:10px;background:currentColor;border-radius:50%;display:block}
+.is-stop .glyph i{border-radius:3px}
+
+.rec{display:inline-flex;border-radius:var(--r-pill);margin-left:auto;
+  padding:10px 17px;font-size:13px;font-weight:600;letter-spacing:.03em;color:var(--text-faint);
+  transition:color .3s}
+.rec b{width:9px;height:9px;border-radius:50%;background:currentColor;transition:box-shadow .3s}
+body.recording .rec{color:var(--rec)}
+body.recording .rec b{box-shadow:0 0 12px var(--rec);animation:pulse 1.15s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
+
+.panel{position:relative;border-radius:var(--r-lg);background:rgba(0,0,0,.22);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 14px 32px -24px rgba(0,0,0,.95);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.preview-wrap{overflow:hidden;margin-bottom:18px}
+video{display:block;width:100%;aspect-ratio:16/9;background:#04040a;border-radius:inherit}
+.empty{position:absolute;inset:0;display:grid;place-content:center;gap:10px;text-align:center;
+  color:var(--text-faint);font-size:14px;pointer-events:none;transition:opacity .4s}
+.empty svg{width:34px;height:34px;margin:0 auto;opacity:.5}
+body.has-video .empty{opacity:0}
+.console{margin-bottom:18px}
+.console-bar{display:flex;align-items:center;gap:12px;padding:11px 16px;
+  border-bottom:1px solid rgba(255,255,255,.07);font-size:12px;font-weight:500;
+  color:var(--text-faint);letter-spacing:.04em}
+.lights{display:flex;gap:7px}
+.lights i{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}
+.lights i:nth-child(3){background:#28c840}
+pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;line-height:1.7;
+  color:var(--text-dim);padding:16px 18px;white-space:pre-wrap;word-break:break-word;
+  max-height:220px;overflow:auto}
+.backup{padding:22px}
+.backup-title{font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-faint);margin-bottom:4px}
+.backup p.note{color:var(--text-dim);font-size:14px;margin-bottom:16px}
+.file-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.file-pick{overflow:hidden}
+.file-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:6}
+.file-name{flex:1;min-width:130px;font-size:13px;color:var(--text-faint);
+  font-family:"JetBrains Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:560px){
+  .pad{padding:26px 22px}.rec{margin-left:0}
+  .gbtn{flex:1 1 auto}.gbtn .lg-content{width:100%;justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){*,*::after,*::before{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="mesh" aria-hidden="true">
+ <span class="cool"></span><span class="cool-s"></span><span class="seam"></span>
+ <span class="warm"></span><span class="warm-s"></span>
+</div>
+<div class="vig" aria-hidden="true"></div>
+
+<div class="stage">
+ <main class="card" data-liquid-glass='{"radius":34,"bezel":46,"scale":56,"dispersion":0.12,"blur":0.6,"frost":7,"tint":"rgba(255,255,255,0.045)","specularOpacity":0.55}'>
+  <div class="pad">
+   <div class="stagger">
+    <header>
+     <span class="badge" data-liquid-glass='{"radius":999,"bezel":18,"scale":48,"dispersion":0.16,"frost":3,"tint":"rgba(255,255,255,0.06)"}'>
+       <span class="dot"></span> Local Nemotron · on-device
+     </span>
+     <h1>Sisyphus<br>Screen Recorder</h1>
+     <p class="lede">Record a workflow once. Sisyphus turns the capture into
+      reusable agent steps — entirely on your machine.</p>
+    </header>
+
+    <div class="controls">
+     <button id="start" class="gbtn is-start"
+       data-liquid-glass='{"radius":999,"bezel":24,"scale":68,"dispersion":0.2,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
+       <span class="glyph"><i></i></span> Start recording
+     </button>
+     <button id="stop" class="gbtn is-stop" disabled
+       data-liquid-glass='{"radius":999,"bezel":24,"scale":68,"dispersion":0.2,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
+       <span class="glyph"><i></i></span> Stop recording
+     </button>
+     <a id="download" class="gbtn is-neutral" style="display:none;"
+       data-liquid-glass='{"radius":999,"bezel":24,"scale":68,"dispersion":0.2,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
+       Download recording
+     </a>
+     <span class="rec"
+       data-liquid-glass='{"radius":999,"bezel":18,"scale":44,"dispersion":0.14,"frost":3,"tint":"rgba(255,255,255,0.05)"}'>
+       <b></b> <span id="recLabel">Idle</span>
+     </span>
+    </div>
+
+    <div class="panel preview-wrap">
+     <video id="preview" controls></video>
+     <div class="empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+       <rect x="2.5" y="5" width="19" height="14" rx="3"/>
+       <path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"/>
+      </svg>
+      <span>Your recording preview will appear here</span>
+     </div>
+    </div>
+
+    <div class="panel console">
+     <div class="console-bar"><span class="lights"><i></i><i></i><i></i></span> sisyphus · console</div>
+     <pre id="status">Ready.</pre>
+    </div>
+
+    <div class="panel backup">
+     <div class="backup-title">Backup</div>
+     <p class="note">Upload a saved WebM recording manually.</p>
+     <div class="file-row">
+      <label class="gbtn is-neutral file-pick"
+        data-liquid-glass='{"radius":999,"bezel":22,"scale":60,"dispersion":0.18,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
+        Choose file
+        <input id="manualFile" type="file" accept="video/webm,video/*">
+      </label>
+      <span class="file-name" id="fileName">No file selected</span>
+      <button id="manualUpload" class="gbtn is-neutral"
+        data-liquid-glass='{"radius":999,"bezel":22,"scale":60,"dispersion":0.18,"frost":2,"tint":"rgba(255,255,255,0.05)"}'>
+        Upload saved recording
+      </button>
+     </div>
+    </div>
+   </div>
+  </div>
+ </main>
+</div>
+
+<script src="liquid-glass.js"></script>
+<script>
+window.addEventListener("load",()=>{
+  document.querySelectorAll(".gbtn").forEach(b=>{
+    b.addEventListener("pointerdown",()=>{
+      if(b.hasAttribute("disabled"))return;
+      b.classList.remove("press");void b.offsetWidth;b.classList.add("press");
+    });
+    b.addEventListener("animationend",e=>{if(e.animationName==="press")b.classList.remove("press")});
+  });
+});
+
+let recorder,chunks=[];
+const startBtn=document.getElementById("start"),stopBtn=document.getElementById("stop"),
+  download=document.getElementById("download"),preview=document.getElementById("preview"),
+  status=document.getElementById("status"),recLabel=document.getElementById("recLabel");
+function showVideo(){document.body.classList.add("has-video")}
+
+startBtn.onclick=async()=>{
+  chunks=[];download.style.display="none";preview.removeAttribute("src");
+  const stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+  recorder=new MediaRecorder(stream,{mimeType:"video/webm"});
+  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data)};
+  recorder.onstop=()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    const blob=new Blob(chunks,{type:"video/webm"}),url=URL.createObjectURL(blob);
+    preview.src=url;showVideo();download.href=url;download.download="sisyphus-workflow.webm";
+    download.style.display="inline-flex";
+    document.body.classList.remove("recording");recLabel.textContent="Processing";
+    status.textContent="Recording complete. Uploading to Sisyphus...";
+    const fd=new FormData();fd.append("video",blob,"sisyphus-workflow.webm");
+    fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
+      recLabel.textContent="Idle";
+      status.textContent="Upload complete.\n"+"Run ID: "+d.run_id+"\n"+
+        "Frames extracted: "+d.frames.length+"\n\n"+d.frames.join("\n");
+    }).catch(err=>{recLabel.textContent="Idle";status.textContent="Upload failed: "+err});
+  };
+  recorder.start();
+  startBtn.disabled=true;stopBtn.disabled=false;
+  document.body.classList.add("recording");recLabel.textContent="Recording";
+  status.textContent="Recording...";
+};
+stopBtn.onclick=()=>{recorder.stop();startBtn.disabled=false;stopBtn.disabled=true};
+
+const manualFile=document.getElementById("manualFile"),
+  manualUpload=document.getElementById("manualUpload"),fileName=document.getElementById("fileName");
+manualFile.onchange=()=>{const f=manualFile.files[0];fileName.textContent=f?f.name:"No file selected"};
+manualUpload.onclick=()=>{
+  const f=manualFile.files[0];
+  if(!f){status.textContent="Select a saved WebM recording first.";return}
+  const url=URL.createObjectURL(f);
+  preview.src=url;showVideo();download.href=url;download.download=f.name;
+  download.style.display="inline-flex";
+  status.textContent="Uploading saved recording to Sisyphus...";
+  const fd=new FormData();fd.append("video",f,f.name);
+  fetch("/upload",{method:"POST",body:fd}).then(r=>r.json()).then(d=>{
+    status.textContent="Upload complete.\n"+"Run ID: "+d.run_id+"\n"+
+      "Frames extracted: "+d.frames.length+"\n\n"+d.frames.join("\n");
+  }).catch(err=>{status.textContent="Upload failed: "+err});
+};
+</script>
+</body>
+</html>

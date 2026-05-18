@@ -113,116 +113,6 @@ body.recording .rec{color:var(--rec)}
 body.recording .rec b{box-shadow:0 0 12px var(--rec);animation:pulse 1.15s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.65)}}
 
-/* ===== voice dictation search bar ===== */
-@property --rb-ang{syntax:'<angle>';initial-value:0deg;inherits:false}
-.dictate{position:relative;margin:4px 0 2px}
-.dictate-bar{position:relative;display:block;border-radius:var(--r-pill);cursor:text}
-/* the glow lives on the PILL (not the wrapper) so it hugs it tightly */
-.dictate-bar::before,.dictate-bar::after{
-  content:"";position:absolute;border-radius:inherit;pointer-events:none;
-  opacity:0;transition:opacity .5s var(--ease);
-  background:conic-gradient(from var(--rb-ang),
-    #c98ea1,#caa98c,#c8c19b,#9bbcaa,#9bb0c6,#aea3c4,#c69dbb,#c98ea1)}
-/* soft halo, tucked right against the pill edge */
-.dictate-bar::before{inset:-5px;z-index:-1;filter:blur(11px) saturate(50%)}
-/* crisp ring sitting exactly on the pill's outline */
-.dictate-bar::after{inset:0;padding:2.5px;z-index:5;filter:saturate(55%);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude}
-.dictate.is-active .dictate-bar::before{opacity:.6;animation:rb-spin 3.4s linear infinite}
-.dictate.is-active .dictate-bar::after{opacity:.92;animation:rb-spin 2.3s linear infinite}
-.dictate.is-listening .dictate-bar::before{opacity:.78;animation-duration:1.9s}
-.dictate.is-listening .dictate-bar::after{opacity:1;animation-duration:1.25s}
-@keyframes rb-spin{to{--rb-ang:360deg}}
-@media (prefers-reduced-motion:reduce){
-  .dictate.is-active .dictate-bar::before,
-  .dictate.is-active .dictate-bar::after{animation:none}}
-
-.dictate-bar .lg-content{display:flex!important;align-items:center;width:100%;
-  gap:8px;padding:7px 9px 7px 9px}
-.x-btn{flex:none;border:none;background:none;cursor:pointer;color:var(--text);
-  display:inline-grid;place-items:center;border-radius:50%;
-  transition:transform .3s var(--spring),background .25s var(--ease),color .25s var(--ease)}
-.dictate-input{flex:1;min-width:0;border:none;outline:none;background:none;
-  font:600 15px/1.2 "Manrope",system-ui,sans-serif;letter-spacing:-.01em;
-  color:var(--text);padding:8px 2px}
-.dictate-input::placeholder{color:var(--text-faint);font-weight:500}
-.x-btn{width:30px;height:30px;font-size:17px;color:var(--text-faint);opacity:0;
-  transform:scale(.7);pointer-events:none}
-.dictate-bar.has-text .x-btn{opacity:1;transform:scale(1);pointer-events:auto}
-.x-btn:hover{color:var(--text);background:rgba(255,255,255,.08)}
-.expand-btn{flex:none;border:none;cursor:pointer;width:36px;height:36px;
-  display:inline-grid;place-items:center;border-radius:50%;color:var(--text-dim);
-  background:rgba(255,255,255,.06);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
-  transition:transform .3s var(--spring),color .25s var(--ease),
-    background .25s var(--ease),box-shadow .25s var(--ease)}
-.expand-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;
-  stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.expand-btn:hover{color:var(--text);transform:scale(1.08);
-  background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
-.expand-btn:active{transform:scale(1.15)}
-.dictate-bar.has-text .expand-btn{color:#5cf0c8;
-  box-shadow:inset 0 0 0 1px rgba(92,240,200,.4),0 0 14px -5px rgba(92,240,200,.7)}
-
-/* ===== fullscreen transcription (iOS folder-style expand) ===== */
-.dictate-fs{position:fixed;inset:0;z-index:120;display:flex;
-  align-items:center;justify-content:center;padding:24px;
-  opacity:0;pointer-events:none;
-  background:rgba(5,5,7,.55);
-  backdrop-filter:blur(26px) saturate(150%);
-  -webkit-backdrop-filter:blur(26px) saturate(150%);
-  transition:opacity .4s var(--ease)}
-.dictate-fs.open{opacity:1;pointer-events:auto}
-.dictate-fs-card{position:relative;width:min(860px,100%);
-  height:min(80vh,720px);display:flex;flex-direction:column;
-  border-radius:var(--r-xl);overflow:hidden;
-  background:rgba(18,18,24,.62);
-  border:1px solid rgba(255,255,255,.13);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),
-    0 50px 120px -30px rgba(0,0,0,.85);
-  transform-origin:top left;will-change:transform,opacity;
-  transition:transform .52s var(--spring),opacity .32s var(--ease)}
-.dictate-fs-head{display:flex;align-items:center;gap:12px;
-  padding:20px 22px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
-.dictate-fs-title{font-family:"Bricolage Grotesque",sans-serif;
-  font-weight:800;font-size:20px;letter-spacing:-.02em;
-  background:linear-gradient(180deg,#fff,rgba(255,255,255,.6));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.dictate-fs-state{font-family:"JetBrains Mono",monospace;font-size:11.5px;
-  letter-spacing:.04em;color:var(--text-faint);margin-left:2px}
-.dictate.is-listening~.dictate-fs .dictate-fs-state,
-.dictate-fs.listening .dictate-fs-state{color:#ff5d6e}
-.dictate-fs-close{flex:none;margin-left:auto;width:38px;height:38px;
-  border:none;cursor:pointer;border-radius:50%;font-size:22px;line-height:1;
-  color:var(--text-dim);background:rgba(255,255,255,.06);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
-  display:inline-grid;place-items:center;
-  transition:transform .3s var(--spring),background .25s var(--ease),color .25s var(--ease)}
-.dictate-fs-close:hover{color:var(--text);transform:scale(1.07);
-  background:rgba(255,255,255,.13)}
-.dictate-fs-close:active{transform:scale(1.14)}
-.dictate-fs-text{flex:1;border:none;outline:none;resize:none;
-  background:none;color:var(--text);padding:24px 26px;
-  font:500 18px/1.65 "Manrope",system-ui,sans-serif;letter-spacing:-.01em;
-  overflow:auto}
-.dictate-fs-text::placeholder{color:var(--text-faint)}
-@media (prefers-reduced-motion:reduce){
-  .dictate-fs-card{transition:opacity .2s linear!important}}
-.dictate-hint{margin:7px 4px 0;font-size:12px;color:var(--text-faint);
-  font-family:"JetBrains Mono",ui-monospace,monospace;letter-spacing:.01em;
-  min-height:15px;transition:color .3s}
-.dictate-hint.ok{color:#5cf0c8}.dictate-hint.err{color:#ff5d6e}
-@media (max-width:560px){.dictate-input{font-size:14px}}
-
-.divider{position:relative;height:1px;margin:24px 2px 26px;border:none;
-  background:linear-gradient(90deg,transparent,
-    rgba(255,255,255,.16) 18%,rgba(255,255,255,.16) 82%,transparent)}
-.divider::after{content:"";position:absolute;left:0;right:0;top:1px;height:1px;
-  background:linear-gradient(90deg,transparent,
-    rgba(0,0,0,.35) 18%,rgba(0,0,0,.35) 82%,transparent)}
-
 /* ===== custom liquid-glass video player ===== */
 .player{position:relative;border-radius:var(--r-lg);overflow:hidden;margin-bottom:18px;
   background:#04040a;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),
@@ -252,7 +142,7 @@ body:not(.has-video) .pbar{display:none}
 
 /* seekbar: GIF-style glass scrubber */
 .seek{
-  --seek-track-y:31px;
+  --seek-track-y:38px;
   --seek-track-h:5px;
   position:relative;flex:1;height:62px;display:flex;align-items:flex-start;
   cursor:pointer;touch-action:none;overflow:visible;min-width:130px;
@@ -359,32 +249,15 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
      <span class="badge" data-liquid-glass='{"radius":999,"bezel":18,"scale":48,"dispersion":0.16,"frost":3,"tint":"rgba(255,255,255,0.06)"}'>
        <span class="dot"></span> Local Nemotron · on-device
      </span>
-     <h1>Sisyphus<br>Workflow Agent</h1>
+     <h1>Sisyphus<br>Screen Recorder</h1>
      <p class="lede">Record a workflow once. Sisyphus turns the capture into
-      reusable agent steps, all entirely on your machine.</p>
+      reusable agent steps — entirely on your machine.</p>
     </header>
-
-    <div class="dictate" id="dictateWrap">
-     <div class="dictate-bar" id="dictateBar"
-       data-liquid-glass='{"radius":999,"bezel":20,"scale":52,"dispersion":0.16,"frost":3,"tint":"rgba(255,255,255,0.05)","specularOpacity":0.6}'>
-      <input id="dictateInput" class="dictate-input" type="text" autocomplete="off"
-        spellcheck="false" placeholder="Use the recording button to dictate, or just type...">
-      <button class="x-btn" id="dictateClear" type="button" aria-label="Clear text">&times;</button>
-      <button class="expand-btn" id="dictateExpand" type="button" aria-label="Expand transcription to fullscreen">
-       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/>
-       </svg>
-      </button>
-     </div>
-     <div class="dictate-hint" id="dictateHint">On-device dictation</div>
-    </div>
-
-    <hr class="divider">
 
     <div class="controls">
      <button id="start" class="gbtn is-start"
        data-liquid-glass='{"radius":999,"bezel":24,"scale":62,"dispersion":0.2,"frost":2,"magnify":true,"magnifyBoost":2.3,"tint":"rgba(255,255,255,0.05)"}'>
-       <span class="glyph"><i></i></span> Start Screen Recording
+       <span class="glyph"><i></i></span> Start recording
      </button>
      <button id="stop" class="gbtn is-stop" disabled
        data-liquid-glass='{"radius":999,"bezel":24,"scale":62,"dispersion":0.2,"frost":2,"magnify":true,"magnifyBoost":2.3,"tint":"rgba(255,255,255,0.05)"}'>
@@ -398,23 +271,6 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
        data-liquid-glass='{"radius":999,"bezel":18,"scale":44,"dispersion":0.14,"frost":3,"tint":"rgba(255,255,255,0.05)"}'>
        <b></b> <span id="recLabel">Idle</span>
      </span>
-    </div>
-
-    <div class="panel backup">
-     <div class="backup-title">Backup</div>
-     <p class="note">Upload a saved WebM recording manually.</p>
-     <div class="file-row">
-      <label class="gbtn is-neutral file-pick"
-        data-liquid-glass='{"radius":999,"bezel":22,"scale":58,"dispersion":0.18,"frost":2,"magnify":true,"magnifyBoost":2.1,"tint":"rgba(255,255,255,0.05)"}'>
-        Choose file
-        <input id="manualFile" type="file" accept="video/webm,video/*">
-      </label>
-      <span class="file-name" id="fileName">No file selected</span>
-      <button id="manualUpload" class="gbtn is-neutral"
-        data-liquid-glass='{"radius":999,"bezel":22,"scale":58,"dispersion":0.18,"frost":2,"magnify":true,"magnifyBoost":2.1,"tint":"rgba(255,255,255,0.05)"}'>
-        Upload saved recording
-      </button>
-     </div>
     </div>
 
     <!-- custom liquid-glass video player -->
@@ -456,21 +312,26 @@ pre#status{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;li
      <div class="console-bar"><span class="lights"><i></i><i></i><i></i></span> sisyphus · console</div>
      <pre id="status">Ready.</pre>
     </div>
+
+    <div class="panel backup">
+     <div class="backup-title">Backup</div>
+     <p class="note">Upload a saved WebM recording manually.</p>
+     <div class="file-row">
+      <label class="gbtn is-neutral file-pick"
+        data-liquid-glass='{"radius":999,"bezel":22,"scale":58,"dispersion":0.18,"frost":2,"magnify":true,"magnifyBoost":2.1,"tint":"rgba(255,255,255,0.05)"}'>
+        Choose file
+        <input id="manualFile" type="file" accept="video/webm,video/*">
+      </label>
+      <span class="file-name" id="fileName">No file selected</span>
+      <button id="manualUpload" class="gbtn is-neutral"
+        data-liquid-glass='{"radius":999,"bezel":22,"scale":58,"dispersion":0.18,"frost":2,"magnify":true,"magnifyBoost":2.1,"tint":"rgba(255,255,255,0.05)"}'>
+        Upload saved recording
+      </button>
+     </div>
+    </div>
    </div>
   </div>
  </main>
-</div>
-
-<div class="dictate-fs" id="dictateFs" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Transcription">
- <div class="dictate-fs-card" id="dictateFsCard">
-  <div class="dictate-fs-head">
-   <span class="dictate-fs-title">Transcription</span>
-   <span class="dictate-fs-state" id="dictateFsState"></span>
-   <button class="dictate-fs-close" id="dictateFsClose" type="button" aria-label="Close fullscreen">&times;</button>
-  </div>
-  <textarea class="dictate-fs-text" id="dictateFsText" spellcheck="false"
-    placeholder="Your transcription will appear here..."></textarea>
- </div>
 </div>
 
 <script src="liquid-glass.js"></script>
@@ -602,16 +463,11 @@ startBtn.onclick=async()=>{
     }).catch(err=>{recLabel.textContent="Idle";status.textContent="Upload failed: "+err});
   };
   recorder.start();
-  if(window.Dictation)window.Dictation.start();
   startBtn.disabled=true;stopBtn.disabled=false;
   document.body.classList.add("recording");recLabel.textContent="Recording";
   status.textContent="Recording...";
 };
-stopBtn.onclick=()=>{
-  recorder.stop();
-  if(window.Dictation)window.Dictation.stop();
-  startBtn.disabled=false;stopBtn.disabled=true;
-};
+stopBtn.onclick=()=>{recorder.stop();startBtn.disabled=false;stopBtn.disabled=true};
 
 const manualFile=document.getElementById("manualFile"),
   manualUpload=document.getElementById("manualUpload"),fileName=document.getElementById("fileName");
@@ -627,223 +483,6 @@ manualUpload.onclick=()=>{
       "Frames extracted: "+d.frames.length+"\n\n"+d.frames.join("\n");
   }).catch(err=>{status.textContent="Upload failed: "+err});
 };
-
-/* ----- voice dictation (driven by the screen-recording button) ----- */
-(function(){
-  const wrap=document.getElementById("dictateWrap"),
-    bar=document.getElementById("dictateBar"),
-    input=document.getElementById("dictateInput"),
-    clearBtn=document.getElementById("dictateClear"),
-    expandBtn=document.getElementById("dictateExpand"),
-    hint=document.getElementById("dictateHint"),
-    fs=document.getElementById("dictateFs"),
-    fsCard=document.getElementById("dictateFsCard"),
-    fsText=document.getElementById("dictateFsText"),
-    fsState=document.getElementById("dictateFsState"),
-    fsClose=document.getElementById("dictateFsClose");
-
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let rec=null,listening=false,committed="";
-
-  function setHint(msg,cls){
-    hint.textContent=msg;
-    hint.classList.remove("ok","err");
-    if(cls)hint.classList.add(cls);
-  }
-  function scrollEnds(){
-    // keep the newest (rightmost) text in view as dictation grows
-    requestAnimationFrame(()=>{
-      if(document.activeElement!==input)
-        input.scrollLeft=input.scrollWidth;
-      if(document.activeElement!==fsText)
-        fsText.scrollTop=fsText.scrollHeight;
-    });
-  }
-  function refreshText(){
-    bar.classList.toggle("has-text",input.value.trim().length>0);
-    if(fs.classList.contains("open")&&document.activeElement!==fsText)
-      fsText.value=input.value;
-    scrollEnds();
-  }
-  function activate(){wrap.classList.add("is-active")}
-  function deactivate(){if(!listening)wrap.classList.remove("is-active")}
-
-  // click anywhere on the pill (except buttons) focuses the field
-  bar.addEventListener("pointerdown",e=>{
-    if(e.target.closest(".x-btn,.expand-btn"))return;
-    activate();setTimeout(()=>input.focus(),0);
-  });
-  input.addEventListener("focus",activate);
-  input.addEventListener("blur",deactivate);
-  input.addEventListener("input",refreshText);
-  clearBtn.addEventListener("click",()=>{
-    input.value="";committed="";refreshText();input.focus();
-  });
-
-  // download whatever has been dictated/typed as transcript.txt
-  // (also POSTs to /save-dictation if a server route exists)
-  function saveTranscript(){
-    const text=input.value.trim();
-    if(!text){setHint("Nothing to save yet","err");return}
-    fetch("/save-dictation",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text:text,filename:"transcript.txt"})
-    }).then(r=>{
-      if(!r.ok)throw new Error("HTTP "+r.status);
-      return r.json().catch(()=>({}));
-    }).then(d=>{
-      const where=(d&&d.path)?d.path:"transcript.txt";
-      setHint("Saved to "+where,"ok");
-    }).catch(()=>{
-      // no server route — download the file directly
-      const blob=new Blob([text+"\n"],{type:"text/plain"});
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);a.download="transcript.txt";
-      document.body.appendChild(a);a.click();a.remove();
-      setHint("Got it!    :)","ok");
-    });
-  }
-
-  // Enter in either field still saves transcript.txt
-  input.addEventListener("keydown",e=>{
-    if(e.key==="Enter"){e.preventDefault();saveTranscript()}
-  });
-
-  /* ---- fullscreen transcription (iOS folder-style expand) ---- */
-  function syncFromFs(){
-    input.value=fsText.value;refreshText();
-  }
-  fsText.addEventListener("input",syncFromFs);
-  fsText.addEventListener("keydown",e=>{
-    if((e.metaKey||e.ctrlKey)&&e.key==="Enter"){e.preventDefault();saveTranscript()}
-    if(e.key==="Escape")closeFs();
-  });
-
-  function openFs(){
-    fsText.value=input.value;
-    fsState.textContent=listening?"● recording":"";
-    fs.setAttribute("aria-hidden","false");
-    // measure the bar, then grow the card out of it (FLIP)
-    const b=bar.getBoundingClientRect();
-    fs.style.pointerEvents="auto";
-    fs.classList.add("open");
-    const c=fsCard.getBoundingClientRect();
-    const sx=b.width/c.width, sy=b.height/c.height;
-    const tx=b.left-c.left, ty=b.top-c.top;
-    fsCard.style.transition="none";
-    fsCard.style.opacity="0";
-    fsCard.style.transform=
-      "translate("+tx+"px,"+ty+"px) scale("+sx+","+sy+")";
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{
-        fsCard.style.transition="";
-        fsCard.style.opacity="1";
-        fsCard.style.transform="none";
-      });
-    });
-  }
-  function closeFs(){
-    const b=bar.getBoundingClientRect();
-    const c=fsCard.getBoundingClientRect();
-    const sx=b.width/c.width, sy=b.height/c.height;
-    const tx=b.left-c.left, ty=b.top-c.top;
-    fs.classList.remove("open");
-    fsCard.style.opacity="0";
-    fsCard.style.transform=
-      "translate("+tx+"px,"+ty+"px) scale("+sx+","+sy+")";
-    fs.style.pointerEvents="none";
-    const done=()=>{
-      fsCard.removeEventListener("transitionend",done);
-      fs.setAttribute("aria-hidden","true");
-      fsCard.style.transition="none";
-      fsCard.style.transform="none";
-      fsCard.style.opacity="";
-      requestAnimationFrame(()=>fsCard.style.transition="");
-    };
-    fsCard.addEventListener("transitionend",done);
-    setTimeout(done,600);
-  }
-  expandBtn.addEventListener("click",()=>{
-    fs.classList.contains("open")?closeFs():openFs();
-  });
-  fsClose.addEventListener("click",closeFs);
-  fs.addEventListener("pointerdown",e=>{if(e.target===fs)closeFs()});
-
-  function startRec(){
-    if(listening)return;
-    // rainbow ring lights up the instant recording starts
-    listening=true;
-    wrap.classList.add("is-active","is-listening");
-    fsState.textContent="● recording";
-    if(!SR){
-      setHint("Recording — no on-device speech recognition here (type instead, or use Chrome/Edge)","err");
-      return;
-    }
-    rec=new SR();
-    rec.lang=navigator.language||"en-US";
-    rec.continuous=true;
-    rec.interimResults=true;
-    committed=input.value?input.value.replace(/\s+$/,"")+" ":"";
-
-    rec.onstart=()=>{
-      listening=true;
-      wrap.classList.add("is-active","is-listening");
-      fsState.textContent="● recording";
-      setHint("Listening… stop the recording to save transcript.txt");
-    };
-    rec.onresult=(e)=>{
-      let interim="";
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const r=e.results[i];
-        if(r.isFinal)committed+=r[0].transcript.trim()+" ";
-        else interim+=r[0].transcript;
-      }
-      // live preview only — nothing is saved until you stop
-      input.value=(committed+interim).replace(/\s+/g," ").trimStart();
-      refreshText();
-    };
-    rec.onerror=(e)=>{
-      if(e.error==="not-allowed"||e.error==="service-not-allowed")
-        setHint("Microphone permission denied","err");
-      else if(e.error==="no-speech")
-        setHint("No speech detected yet…");
-      else setHint("Dictation error: "+e.error,"err");
-    };
-    rec.onend=()=>{
-      if(listening){ // browser auto-stops periodically; keep going
-        try{rec.start();return}catch(_){}
-      }
-      stopRec(true);
-    };
-    try{rec.start()}
-    catch(_){setHint("Could not start dictation","err")}
-  }
-  function stopRec(fromEnd){
-    const wasListening=listening;
-    listening=false;
-    // rainbow ring fully disappears the moment recording stops
-    wrap.classList.remove("is-listening","is-active");
-    fsState.textContent="";
-    if(rec&&!fromEnd){try{rec.stop()}catch(_){}}
-    rec=null;
-    // stopping the recording also stops dictation AND saves
-    if(wasListening&&input.value.trim()){
-      saveTranscript();
-    }else if(!hint.classList.contains("err")){
-      setHint("On-device dictation");
-    }
-  }
-
-  // exposed so the Start / Stop Screen Recording button drives dictation
-  window.Dictation={
-    start:startRec,
-    stop:()=>stopRec(false),
-    isListening:()=>listening
-  };
-
-  if(!SR)setHint("Dictation needs Chrome or Edge — you can still type here","err");
-})();
 </script>
 </body>
 </html>
